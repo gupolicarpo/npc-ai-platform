@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>NPC Interactive</title>
+        <!-- Google Fonts to match other pages -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600&family=Quintessential&display=swap"
+            rel="stylesheet"
+        />
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <!-- auth.js now provides the global secureFetch function -->
+        <script src="/auth.js" defer></script>
+        <style>
+            /* Centralized design tokens from your other pages */
+            :root {
+                --bg-dark: #0d0d0d;
+                --card-bg: #2b2b2b;
+                --text-primary: #f1f1f1;
+                --text-secondary: #cccccc;
+                --accent: #ffc107;
+                --accent-hover: #e6b800;
+                --border-color: #444;
+            }
+
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-primary);
+                font-family: "Inter", sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                text-align: center;
+                overflow: hidden;
+            }
+            .main-container {
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+                width: 90%;
+                max-width: 900px;
+                border: 1px solid var(--border-color);
+                background-color: var(--card-bg);
+                padding: 2rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            }
+            .avatar-container {
+                flex-basis: 35%;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .npc-avatar {
+                width: 100%;
+                height: 340px;
+                object-fit: cover;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+            }
+            .chat-container {
+                flex-basis: 65%;
+                display: flex;
+                flex-direction: column;
+            }
+            h1 {
+                font-family: "Cinzel", serif;
+                color: var(--text-primary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 10px;
+                margin-top: 0;
+                font-size: 1.8rem;
+            }
+            #log {
+                height: 300px;
+                overflow-y: auto;
+                border: 1px solid var(--border-color);
+                padding: 10px;
+                margin-bottom: 10px;
+                text-align: left;
+                background-color: var(--bg-dark);
+                flex-grow: 1;
+                border-radius: 6px;
+            }
+            .user-message {
+                color: var(--text-secondary);
+            }
+            .npc-message {
+                color: var(--accent);
+                font-style: italic;
+            }
+            .chat-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            #recordBtn,
+            #stopBtn {
+                width: 100%;
+                padding: 15px;
+                font-size: 1.1em;
+                cursor: pointer;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                transition: background-color 0.3s;
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+            }
+            #recordBtn {
+                background-color: #8c2f2f;
+            }
+            #recordBtn:hover {
+                background-color: #b33f3f;
+            }
+            #recordBtn:disabled {
+                background-color: #5a1e1e;
+                cursor: not-allowed;
+            }
+            #stopBtn {
+                background-color: #555;
+                display: none;
+            }
+            #stopBtn:hover {
+                background-color: #777;
+            }
+
+            /* --- BUTTON STYLES --- */
+            .action-button {
+                font-family: "Inter", sans-serif;
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                border-radius: 6px;
+                transition: background-color 0.2s;
+                border: none;
+                color: var(--text-primary);
+            }
+            .action-button:disabled {
+                background-color: #333 !important;
+                color: #888 !important;
+                cursor: not-allowed;
+            }
+            #saveBtn {
+                background-color: #5cb85c;
+                color: white;
+            }
+            #saveBtn:hover:not(:disabled) {
+                background-color: #4cae4c;
+            }
+            #memoryBtn {
+                background-color: #2a628c;
+            }
+            #memoryBtn:hover:not(:disabled) {
+                background-color: #3b82af;
+            }
+            #inventoryBtn {
+                background-color: #6a553c;
+            }
+            #inventoryBtn:hover:not(:disabled) {
+                background-color: #8a6d4c;
+            }
+            #exportBtn {
+                background-color: #9370db;
+                color: white;
+            }
+            #exportBtn:hover:not(:disabled) {
+                background-color: #825fca;
+            }
+
+            #status {
+                color: var(--text-secondary);
+                height: 20px;
+                margin-top: 10px;
+            }
+            .back-link {
+                display: block;
+                text-align: left;
+                margin-bottom: 1rem;
+                color: var(--accent);
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+            /* --- RESTORED & THEMED STYLES --- */
+            .settings-bar {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                margin-bottom: 10px;
+                gap: 10px;
+                font-family: "Inter", sans-serif;
+                font-style: normal;
+                font-size: 0.9rem;
+            }
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 50px;
+                height: 24px;
+            }
+            .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #555;
+                transition: 0.4s;
+                border-radius: 24px;
+            }
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+            input:checked + .slider {
+                background-color: #2a8c4a;
+            } /* Functional Green */
+            input:checked + .slider:before {
+                transform: translateX(26px);
+            }
+
+            .insight-icon {
+                display: inline-block;
+                margin-left: 10px;
+                font-style: normal;
+                cursor: pointer;
+                font-size: 1.2rem;
+                color: var(--text-secondary);
+                transition: color 0.2s;
+            }
+            .insight-icon:hover {
+                color: var(--accent);
+            }
+            .insight-modal-container {
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .insight-modal-content {
+                background-color: #1e1915;
+                background-image: url("https://www.transparenttextures.com/patterns/old-paper.png");
+                color: #3d2e1a;
+                padding: 20px 30px;
+                border: 2px solid #4a3c2b;
+                border-radius: 8px;
+                width: 90%;
+                max-width: 500px;
+                box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+                position: relative;
+            }
+            .insight-modal-content h2 {
+                font-family: "Cinzel", serif;
+                color: #5c2c1a;
+                text-align: center;
+                border-bottom: 1px solid #8a6d4c;
+                padding-bottom: 0.5rem;
+                margin-top: 0;
+            }
+            .insight-modal-content p {
+                font-family: "Quintessential", cursive;
+                font-size: 1.1rem;
+                line-height: 1.6;
+            }
+            .close-button {
+                color: #888;
+                position: absolute;
+                top: 10px;
+                right: 20px;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .close-button:hover {
+                color: #3d2e1a;
+            }
+
+            .text-input-container {
+                display: flex;
+                gap: 10px;
+            }
+            #chatInput {
+                flex-grow: 1;
+                padding: 0.8rem 1rem;
+                background-color: var(--bg-dark);
+                border: 1px solid var(--border-color);
+                color: var(--text-primary);
+                border-radius: 6px;
+                font-family: "Inter", sans-serif;
+                font-size: 1rem;
+                transition:
+                    border-color 0.2s,
+                    box-shadow 0.2s;
+            }
+            #chatInput:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+            }
+            #chatInput::placeholder {
+                color: var(--text-secondary);
+            }
+            #sendBtn {
+                padding: 0.8rem 1.5rem;
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+                font-size: 1rem;
+                cursor: pointer;
+                color: white;
+                background-color: #2a628c; /* Blue to match other pages' buttons */
+                border: none;
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+            #sendBtn:hover {
+                background-color: #3b82af; /* Lighter blue for hover */
+            }
+
+            .inventory-panel {
+                position: fixed;
+                top: 0;
+                right: -350px;
+                width: 300px;
+                height: 100%;
+                background-color: #1e1915;
+                background-image: url("https://www.transparenttextures.com/patterns/dark-leather.png");
+                border-left: 2px solid #4a3c2b;
+                box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+                z-index: 1001;
+                transition: right 0.4s ease-in-out;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            .inventory-panel.open {
+                right: 0;
+            }
+            .inventory-panel h2 {
+                font-family: "Cinzel", serif;
+                color: #e6c58a;
+                text-align: center;
+                border-bottom: 1px solid #4a3c2b;
+                padding-bottom: 1rem;
+                margin-top: 0;
+            }
+            #inventoryList {
+                list-style: none;
+                padding: 0;
+                color: #d1c5ad;
+                font-family: "Quintessential", cursive;
+                font-size: 1.1rem;
+            }
+            #inventoryList li {
+                padding: 0.5rem;
+                border-bottom: 1px dashed #4a3c2b;
+                text-align: left;
+            }
+            #closeInventoryBtn {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                background: none;
+                border: none;
+                color: #aaa;
+                font-size: 2rem;
+                cursor: pointer;
+                padding: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main-container">
+            <div class="avatar-container">
+                <img
+                    src=""
+                    alt="NPC Avatar"
+                    id="npcAvatar"
+                    class="npc-avatar"
+                />
+                <button id="saveBtn" class="action-button">
+                    Save this NPC
+                </button>
+                <button id="memoryBtn" class="action-button">
+                    End Conversation & Create Memory
+                </button>
+                <button id="inventoryBtn" class="action-button">
+                    🎒 View Inventory
+                </button>
+                <button id="exportBtn" class="action-button">
+                    📋 Export Conversation
+                </button>
+            </div>
+            <div class="chat-container">
+                <a href="/library.html" class="back-link">← Back to Library</a>
+                <h1 id="npc-chat-title">Chat with...</h1>
+                <div class="settings-bar">
+                    <label for="voiceToggle">Voice On/Off</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="voiceToggle" checked />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="log"></div>
+                <div class="chat-controls">
+                    <div class="voice-input-container">
+                        <button id="recordBtn">Press to Talk</button>
+                        <button id="stopBtn">Stop</button>
+                    </div>
+                    <div class="text-input-container">
+                        <input
+                            type="text"
+                            id="chatInput"
+                            placeholder="Or type your message here..."
+                        />
+                        <button id="sendBtn">Send</button>
+                    </div>
+                </div>
+                <p id="status"></p>
+            </div>
+        </div>
+
+        <div
+            id="insightModal"
+            class="insight-modal-container"
+            style="display: none"
+        >
+            <div class="insight-modal-content">
+                <span id="closeInsight" class="close-button">&times;</span>
+                <h2>DM's Insight</h2>
+                <p id="insightText"></p>
+            </div>
+        </div>
+
+        <div id="inventoryPanel" class="inventory-panel">
+            <button id="closeInventoryBtn">&times;</button>
+            <h2>Personal Inventory</h2>
+            <ul id="inventoryList"></ul>
+        </div>
+
+        <script>
+            // No local API_BASE_URL or secureFetch needed. They come from auth.js.
+
+            const recordBtn = document.getElementById("recordBtn");
+            const stopBtn = document.getElementById("stopBtn");
+            const saveBtn = document.getElementById("saveBtn");
+            const memoryBtn = document.getElementById("memoryBtn");
+            const voiceToggle = document.getElementById("voiceToggle");
+            const log = document.getElementById("log");
+            const status = document.getElementById("status");
+            const npcChatTitle = document.getElementById("npc-chat-title");
+            const insightModal = document.getElementById("insightModal");
+            const insightText = document.getElementById("insightText");
+            const closeInsightBtn = document.getElementById("closeInsight");
+            const chatInput = document.getElementById("chatInput");
+            const sendBtn = document.getElementById("sendBtn");
+            const inventoryBtn = document.getElementById("inventoryBtn");
+            const inventoryPanel = document.getElementById("inventoryPanel");
+            const exportBtn = document.getElementById("exportBtn");
+            const closeInventoryBtn =
+                document.getElementById("closeInventoryBtn");
+            const inventoryList = document.getElementById("inventoryList");
+
+            let npcData;
+            let audioContext;
+            let currentAudio = null;
+            let chatHistory = [];
+            const MAX_HISTORY_LENGTH = 10;
+
+            document.addEventListener("DOMContentLoaded", async () => {
+                const selectedNpcId = sessionStorage.getItem("selectedNpcId");
+                const npcDataString = sessionStorage.getItem("npcData");
+
+                if (selectedNpcId) {
+                    try {
+                        status.textContent = "Loading character...";
+                        const response = await secureFetch(
+                            `/get-npc-details?id=${selectedNpcId}`,
+                        );
+                        if (!response.ok) {
+                            throw new Error(
+                                `Could not fetch NPC details (${response.status})`,
+                            );
+                        }
+                        npcData = await response.json();
+                        sessionStorage.removeItem("selectedNpcId");
+                        initializePage();
+                    } catch (error) {
+                        console.error(
+                            "Failed to load chat page via ID:",
+                            error,
+                        );
+                        status.textContent = "Error loading character.";
+                        alert(
+                            "Error loading NPC data. Redirecting to library.",
+                        );
+                        window.location.href = "library.html";
+                    }
+                } else if (npcDataString) {
+                    npcData = JSON.parse(npcDataString);
+                    sessionStorage.removeItem("npcData");
+                    initializePage();
+                } else {
+                    alert("No NPC selected! Redirecting to the library.");
+                    window.location.href = "library.html";
+                }
+            });
+
+            function initializePage() {
+                status.textContent = "";
+                const savedVoicePref = localStorage.getItem("voiceEnabled");
+                if (savedVoicePref !== null) {
+                    voiceToggle.checked = savedVoicePref === "true";
+                }
+
+                if (npcData.id) {
+                    saveBtn.textContent = "NPC Saved!";
+                    saveBtn.disabled = true;
+                    memoryBtn.style.display = "block";
+                } else {
+                    saveBtn.disabled = false;
+                    memoryBtn.style.display = "none";
+                }
+
+                document.getElementById("npcAvatar").src = npcData.imageUrl;
+                document.title = `Chatting with ${npcData.name}`;
+                npcChatTitle.textContent = `Chatting with ${npcData.name}`;
+                appendMessage(
+                    `<strong>${npcData.name}:</strong> ...What do you want?`,
+                    "npc-message",
+                    true,
+                );
+
+                populateInventory();
+
+                // Setup all event listeners
+                voiceToggle.addEventListener("change", () => {
+                    localStorage.setItem("voiceEnabled", voiceToggle.checked);
+                });
+
+                saveBtn.addEventListener("click", async () => {
+                    saveBtn.disabled = true;
+                    try {
+                        const selectedCampaignString =
+                            sessionStorage.getItem("selectedCampaign");
+                        if (!selectedCampaignString && !npcData.campaign_id) {
+                            alert(
+                                "Critical error: No campaign selected! Cannot save NPC.",
+                            );
+                            saveBtn.disabled = false;
+                            return;
+                        }
+                        const campaignId =
+                            npcData.campaign_id ||
+                            JSON.parse(selectedCampaignString).id;
+
+                        const response = await secureFetch(`/save-npc`, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                npcData: npcData,
+                                campaignId: campaignId,
+                            }),
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            saveBtn.textContent = "NPC Saved!";
+                            npcData = result.data;
+                            memoryBtn.style.display = "block";
+                        } else {
+                            throw new Error(
+                                result.error || "Failed to save NPC",
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Error saving NPC:", error);
+                        saveBtn.disabled = false;
+                        alert("Failed to save NPC: " + error.message);
+                    }
+                });
+
+                memoryBtn.addEventListener("click", async () => {
+                    memoryBtn.disabled = true;
+                    try {
+                        const response = await secureFetch(`/generate-memory`, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                chatHistory: chatHistory,
+                                npcId: npcData.id,
+                                campaignId: npcData.campaign_id,
+                                npcName: npcData.name,
+                            }),
+                        });
+                        if (!response.ok)
+                            throw new Error(
+                                "Failed to create memory from server.",
+                            );
+                        const result = await response.json();
+                        if (result.message) {
+                            alert(
+                                "Memory created: " +
+                                    (result.memory ||
+                                        "No significant information was learned."),
+                            );
+                            window.location.href = "library.html";
+                        } else {
+                            throw new Error(
+                                result.error || "Failed to create memory",
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Error creating memory:", error);
+                        memoryBtn.disabled = false;
+                        alert("Failed to create memory: " + error.message);
+                    }
+                });
+
+                stopBtn.addEventListener("click", () => {
+                    if (currentAudio) {
+                        currentAudio.pause();
+                        currentAudio.currentTime = 0;
+                        currentAudio = null;
+                    }
+                    status.textContent = "";
+                    recordBtn.disabled = false;
+                    stopBtn.style.display = "none";
+                });
+
+                inventoryBtn.addEventListener("click", () => {
+                    inventoryPanel.classList.add("open");
+                });
+                closeInventoryBtn.addEventListener("click", () => {
+                    inventoryPanel.classList.remove("open");
+                });
+
+                exportBtn.addEventListener("click", () => {
+                    if (!npcData || chatHistory.length === 0) {
+                        alert("There is no conversation to export yet.");
+                        return;
+                    }
+
+                    let logText = `Conversation with ${npcData.name} on ${new Date().toLocaleDateString()}\n`;
+                    logText +=
+                        "==================================================\n\n";
+
+                    chatHistory.forEach((message) => {
+                        const prefix =
+                            message.role === "user"
+                                ? "You:"
+                                : `${npcData.name}:`;
+                        logText += `${prefix}\n${message.content}\n\n`;
+                    });
+
+                    const blob = new Blob([logText], {
+                        type: "text/plain;charset=utf-8",
+                    });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+
+                    const safeFileName = npcData.name
+                        .replace(/[^a-z0-9]/gi, "_")
+                        .toLowerCase();
+                    link.download = `conversation_with_${safeFileName}.txt`;
+
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                });
+
+                log.addEventListener("click", function (event) {
+                    if (event.target.classList.contains("insight-icon")) {
+                        const parentMessage =
+                            event.target.closest(".npc-message");
+                        const insight = parentMessage.dataset.insight;
+                        insightText.textContent = insight;
+                        insightModal.style.display = "flex";
+                    }
+                });
+                closeInsightBtn.addEventListener("click", function () {
+                    insightModal.style.display = "none";
+                });
+                window.addEventListener("click", function (event) {
+                    if (event.target === insightModal) {
+                        insightModal.style.display = "none";
+                    }
+                });
+                sendBtn.addEventListener("click", handleTextSubmit);
+                chatInput.addEventListener("keypress", function (event) {
+                    if (event.key === "Enter") {
+                        handleTextSubmit();
+                    }
+                });
+
+                const SpeechRecognitionAPI =
+                    window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognitionAPI) {
+                    const recognition = new SpeechRecognitionAPI();
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                    recognition.lang = "en-US";
+                    recordBtn.addEventListener("click", () => {
+                        initAudioContext();
+                        recognition.start();
+                        recordBtn.disabled = true;
+                        status.textContent = "Listening...";
+                    });
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        appendMessage(
+                            `<strong>You:</strong> ${transcript}`,
+                            "user-message",
+                        );
+                        sendToServer(transcript);
+                    };
+                    recognition.onerror = (event) => {
+                        console.error("Speech recognition error", event.error);
+                        status.textContent = "Error: " + event.error;
+                        recordBtn.disabled = false;
+                    };
+                    recognition.onend = () => {
+                        if (status.textContent === "Listening...") {
+                            status.textContent = "Processing...";
+                        }
+                    };
+                } else {
+                    recordBtn.disabled = true;
+                    status.textContent =
+                        "Speech recognition not supported in this browser";
+                }
+            }
+
+            function initAudioContext() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext ||
+                        window.webkitAudioContext)();
+                }
+                return audioContext;
+            }
+
+            function populateInventory() {
+                inventoryList.innerHTML = "";
+                if (npcData.inventory && npcData.inventory.trim() !== "") {
+                    const items = npcData.inventory
+                        .split(",")
+                        .map((item) => item.trim())
+                        .filter(Boolean);
+                    if (items.length > 0) {
+                        items.forEach((item) => {
+                            const li = document.createElement("li");
+                            li.textContent = item;
+                            inventoryList.appendChild(li);
+                        });
+                    } else {
+                        const li = document.createElement("li");
+                        li.textContent = "(Inventory is empty)";
+                        inventoryList.appendChild(li);
+                    }
+                } else {
+                    const li = document.createElement("li");
+                    li.textContent = "(This NPC is not carrying anything.)";
+                    inventoryList.appendChild(li);
+                }
+            }
+
+            async function sendToServer(text) {
+                status.textContent = `${npcData.name} is pondering...`;
+                const isVoiceEnabled = voiceToggle.checked;
+                try {
+                    const response = await secureFetch(`/ask-npc`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            question: text,
+                            npcData: npcData,
+                            history: chatHistory,
+                            audioEnabled: isVoiceEnabled,
+                        }),
+                    });
+
+                    if (response.status === 403) {
+                        const errorData = await response.json();
+                        alert(errorData.message);
+                        status.textContent = "Upgrade required for voice.";
+                        recordBtn.disabled = false;
+                        return;
+                    }
+                    if (!response.ok)
+                        throw new Error("Network response was not ok");
+
+                    let npcText, dmInsight, newInventory;
+
+                    if (isVoiceEnabled) {
+                        npcText = decodeURIComponent(
+                            response.headers.get("X-Npc-Text"),
+                        );
+                        dmInsight = decodeURIComponent(
+                            response.headers.get("X-Dm-Insight"),
+                        );
+                        if (response.headers.has("X-Npc-Inventory")) {
+                            newInventory = decodeURIComponent(
+                                response.headers.get("X-Npc-Inventory"),
+                            );
+                        }
+                        const audioBlob = await response.blob();
+                        appendMessage(
+                            `<strong>${npcData.name}:</strong> ${npcText}`,
+                            "npc-message",
+                            false,
+                            dmInsight,
+                        );
+                        chatHistory.push(
+                            { role: "user", content: text },
+                            { role: "assistant", content: npcText },
+                        );
+                        if (chatHistory.length > MAX_HISTORY_LENGTH) {
+                            chatHistory =
+                                chatHistory.slice(-MAX_HISTORY_LENGTH);
+                        }
+                        status.textContent = `${npcData.name} is speaking...`;
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        currentAudio = new Audio(audioUrl);
+                        currentAudio.play();
+                        stopBtn.style.display = "inline-block";
+                        currentAudio.onended = () => {
+                            status.textContent = "";
+                            recordBtn.disabled = false;
+                            stopBtn.style.display = "none";
+                        };
+                    } else {
+                        const result = await response.json();
+                        npcText = result.text;
+                        dmInsight = result.dmInsight;
+                        if (result.inventory !== undefined) {
+                            newInventory = result.inventory;
+                        }
+                        appendMessage(
+                            `<strong>${npcData.name}:</strong> ${npcText}`,
+                            "npc-message",
+                            false,
+                            dmInsight,
+                        );
+                        chatHistory.push(
+                            { role: "user", content: text },
+                            { role: "assistant", content: npcText },
+                        );
+                        if (chatHistory.length > MAX_HISTORY_LENGTH) {
+                            chatHistory =
+                                chatHistory.slice(-MAX_HISTORY_LENGTH);
+                        }
+                        status.textContent = "";
+                        recordBtn.disabled = false;
+                    }
+
+                    if (newInventory !== undefined) {
+                        console.log("Inventory has been updated by the AI!");
+                        npcData.inventory = newInventory;
+                        sessionStorage.setItem(
+                            "npcData",
+                            JSON.stringify(npcData),
+                        );
+                        populateInventory();
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    appendMessage(
+                        `<strong>${npcData.name}:</strong> ... (He refuses to answer)`,
+                        "npc-message",
+                        true,
+                    );
+                    status.textContent = "";
+                    recordBtn.disabled = false;
+                    stopBtn.style.display = "none";
+                }
+            }
+
+            function appendMessage(
+                message,
+                className,
+                isSystemMessage = false,
+                dmInsight = null,
+            ) {
+                const messageElement = document.createElement("div");
+                messageElement.className = className;
+                messageElement.innerHTML = message;
+                if (className === "npc-message" && dmInsight) {
+                    const icon = document.createElement("span");
+                    icon.className = "insight-icon";
+                    icon.innerHTML = "👁️";
+                    icon.title = "Click to see DM's Insight";
+                    messageElement.appendChild(icon);
+                    messageElement.dataset.insight = dmInsight;
+                }
+                log.appendChild(messageElement);
+                if (!isSystemMessage) {
+                    log.scrollTop = log.scrollHeight;
+                }
+            }
+
+            function handleTextSubmit() {
+                const text = chatInput.value.trim();
+                if (text) {
+                    appendMessage(
+                        `<strong>You:</strong> ${text}`,
+                        "user-message",
+                    );
+                    sendToServer(text);
+                    chatInput.value = "";
+                }
+            }
+
+            // === THIS LOCAL VERSION WILL BE DELETED ===
+            async function secureFetch(url, options = {}) {
+                const {
+                    data: { session },
+                } = await supabaseClient.auth.getSession();
+                const token = session?.access_token;
+                const headers = {
+                    ...options.headers,
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                };
+                if (options.body instanceof FormData) {
+                    delete headers["Content-Type"];
+                }
+                const response = await fetch(url, { ...options, headers });
+                return response;
+            }
+        </script>
+    </body>
+</html>

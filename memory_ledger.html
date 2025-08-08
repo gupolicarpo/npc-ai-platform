@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Manage NPC Memories</title>
+
+        <!-- Fonts to match consistent app theme -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <!-- auth.js now contains API_BASE_URL and the global secureFetch -->
+        <script src="/auth.js" defer></script>
+        <style>
+            /* NEW: Consistent root tokens */
+            :root {
+                --bg-dark: #0d0d0d;
+                --card-bg: #2b2b2b;
+                --text-primary: #f1f1f1;
+                --text-secondary: #cccccc;
+                --accent: #ffc107;
+                --accent-hover: #e6b800;
+                --border-color: #444;
+            }
+
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-primary);
+                font-family: "Inter", sans-serif;
+                padding: 2rem;
+                box-sizing: border-box;
+            }
+            .container {
+                max-width: 800px;
+                margin: 2rem auto;
+                background-color: var(--card-bg);
+                border: 1px solid var(--border-color);
+                padding: 2rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            }
+            h1 {
+                font-family: "Cinzel", serif;
+                color: var(--text-primary);
+                text-align: center;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 1rem;
+                margin-top: 0;
+                font-size: 2.2rem;
+                text-shadow: none;
+            }
+            p {
+                color: var(--text-secondary);
+                text-align: center;
+                font-size: 0.95rem;
+            }
+            textarea {
+                width: 100%;
+                padding: 0.8rem 1rem;
+                background-color: var(--bg-dark);
+                border: 1px solid var(--border-color);
+                color: var(--text-primary);
+                border-radius: 6px;
+                font-family: "Inter", sans-serif;
+                font-size: 1rem;
+                box-sizing: border-box;
+                resize: vertical;
+                min-height: 80px;
+                margin-bottom: 1rem;
+                transition:
+                    border-color 0.2s,
+                    box-shadow 0.2s;
+            }
+            textarea:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+            }
+            textarea::placeholder {
+                color: var(--text-secondary);
+            }
+            button {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+                cursor: pointer;
+                color: black;
+                border: none;
+                border-radius: 6px;
+                transition: background-color 0.2s;
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+                box-shadow: none;
+            }
+            #saveBtn {
+                background-color: var(--accent);
+                width: 100%;
+            }
+            #saveBtn:hover {
+                background-color: var(--accent-hover);
+            }
+            .delete-btn {
+                background-color: #8c2f2f; /* Red for delete */
+                color: white;
+            }
+            .delete-btn:hover {
+                background-color: #b33f3f;
+            }
+            #memoriesList {
+                margin-top: 2rem;
+                list-style: none;
+                padding: 0;
+            }
+            .memory-item {
+                background-color: var(--bg-dark);
+                padding: 1rem 1.5rem;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                margin-bottom: 1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                word-break: break-word;
+            }
+            #status {
+                text-align: center;
+                color: var(--text-secondary);
+                height: 20px;
+            }
+            .nav-link {
+                display: block;
+                text-align: center;
+                margin-top: 2rem;
+                color: var(--accent);
+                font-weight: 600;
+                text-decoration: none;
+            }
+            .nav-link:hover {
+                color: var(--accent-hover);
+            }
+            .toast {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--card-bg);
+                color: var(--text-primary);
+                padding: 10px 20px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+                display: none;
+                z-index: 9999;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+            .toast.show {
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 id="title">Manage Memories</h1>
+            <p>
+                Add or remove memories for your NPC. These represent key events
+                or facts they have learned.
+            </p>
+            <form id="memoryForm">
+                <textarea
+                    id="memoryContent"
+                    placeholder="Enter a new memory... e.g., 'Was betrayed by the captain of the guard.'"
+                    required
+                ></textarea>
+                <button id="saveBtn" type="submit">Save New Memory</button>
+            </form>
+            <p id="status">Loading memories...</p>
+            <div id="memoriesList"></div>
+            <a href="/library.html" class="nav-link">← Back to NPC Library</a>
+        </div>
+
+        <div id="toast" class="toast"></div>
+
+        <script>
+            // The JavaScript logic was already correct and uses the global secureFetch.
+            // No changes are needed here.
+
+            const memoryForm = document.getElementById("memoryForm");
+            const memoryContent = document.getElementById("memoryContent");
+            const memoriesList = document.getElementById("memoriesList");
+            const status = document.getElementById("status");
+            const title = document.getElementById("title");
+            const saveBtn = document.getElementById("saveBtn");
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const npcId = urlParams.get("npc_id");
+            const npcName = urlParams.get("npc_name");
+
+            if (!npcId) {
+                alert("No NPC selected! Redirecting...");
+                window.location.href = "/library.html";
+            } else {
+                title.textContent = `Memory Ledger for: ${decodeURIComponent(npcName)}`;
+            }
+
+            async function loadMemories() {
+                try {
+                    const response = await secureFetch(
+                        `/get-memories?npcId=${npcId}`,
+                    );
+                    if (!response.ok)
+                        throw new Error("Could not fetch memories.");
+                    const memories = await response.json();
+                    renderMemories(memories);
+                    enforceMemoryCap(memories.length);
+                    status.textContent = "";
+                } catch (error) {
+                    console.error(error);
+                    status.textContent = "Error loading memories.";
+                }
+            }
+
+            function renderMemories(memories) {
+                memoriesList.innerHTML = "";
+                if (memories.length === 0) {
+                    status.textContent = "This NPC has no recorded memories.";
+                    return;
+                }
+                memories.forEach((memory) => {
+                    const item = document.createElement("div");
+                    item.className = "memory-item";
+                    item.innerHTML = `
+          <span>${memory.content}</span>
+          <button class="delete-btn" data-id="${memory.id}">Delete</button>
+        `;
+                    memoriesList.appendChild(item);
+                });
+            }
+
+            memoryForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const content = memoryContent.value.trim();
+                if (!content) return;
+                try {
+                    const response = await secureFetch(`/save-memory`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            content: content,
+                            npcId: npcId,
+                        }),
+                    });
+                    if (!response.ok) throw new Error("Failed to save memory.");
+                    memoryContent.value = "";
+                    loadMemories();
+                } catch (error) {
+                    console.error(error);
+                    alert("Could not save the memory.");
+                }
+            });
+
+            memoriesList.addEventListener("click", async (e) => {
+                if (e.target.classList.contains("delete-btn")) {
+                    const memoryId = e.target.dataset.id;
+                    if (
+                        !confirm("Are you sure you want to delete this memory?")
+                    )
+                        return;
+                    try {
+                        const response = await secureFetch(`/delete-memory`, {
+                            method: "POST",
+                            body: JSON.stringify({ memoryId: memoryId }),
+                        });
+                        if (!response.ok)
+                            throw new Error("Failed to delete memory.");
+                        loadMemories();
+                    } catch (error) {
+                        console.error(error);
+                        alert("Could not delete the memory.");
+                    }
+                }
+            });
+
+            async function enforceMemoryCap(currentCount) {
+                const session = await getUserSession();
+                const userId = session?.user?.id;
+                if (!userId) return;
+
+                const { data: profile } = await supabaseClient
+                    .from("profiles")
+                    .select("subscription_tier")
+                    .eq("id", userId)
+                    .single();
+
+                const tier = profile?.subscription_tier || "explorer";
+                const limits = {
+                    explorer: 5,
+                    narrator: 25,
+                    worldbuilder: 50,
+                };
+
+                if (currentCount >= limits[tier]) {
+                    saveBtn.disabled = true;
+                    showToast(
+                        `You've reached your memory limit (${limits[tier]}) for this tier.`,
+                    );
+                } else {
+                    saveBtn.disabled = false;
+                }
+            }
+
+            function showToast(msg) {
+                const toast = document.getElementById("toast");
+                toast.textContent = msg;
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 4000);
+            }
+
+            document.addEventListener("DOMContentLoaded", loadMemories);
+        </script>
+    </body>
+</html>

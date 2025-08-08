@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Campaigns</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- auth.js will now contain API_BASE_URL and the global secureFetch, and getUserSession -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/auth.js" defer></script>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600&display=swap");
+
+      :root {
+        --bg-dark: #0d0d0d;
+        --card-bg: #2b2b2b;
+        --text-primary: #f1f1f1;
+        --text-secondary: #cccccc;
+        --accent: #ffc107;
+        --accent-hover: #e6b800;
+        --border-color: #444;
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding-top: 80px;
+      }
+
+      /* --- NAVBAR --- */
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: rgba(13, 13, 13, 0.95);
+        padding: 0.75rem 2rem;
+        border-bottom: 1px solid var(--border-color); /* <-- UPDATED */
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+      }
+
+      .nav-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .navbar-brand {
+        font-family: "Cinzel", serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        text-decoration: none;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+      }
+
+      .nav-link {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        transition: color 0.2s ease;
+      }
+
+      .nav-link:hover {
+        color: var(--accent);
+      }
+
+      .nav-link.active,
+      .nav-link.upgrade-link {
+        color: var(--accent);
+      }
+
+      .nav-link.upgrade-link:hover {
+        color: var(--accent-hover);
+      }
+
+      .logout-btn {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .logout-btn:hover {
+        background-color: #383c42;
+      }
+
+      /* --- HEADINGS --- */
+      h1,
+      h2 {
+        color: var(--text-primary);
+        text-align: center;
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        margin: 2rem 0 1rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+      }
+
+      /* --- MAIN CONTENT --- */
+      .container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+
+      .form-container {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 2rem;
+        border-radius: 12px;
+      }
+
+      .description-group {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+      }
+
+      .description-group textarea {
+        flex-grow: 1;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 6px;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        box-sizing: border-box;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: var(--text-secondary);
+      }
+
+      button {
+        font-family: "Inter", sans-serif;
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+        border: none;
+      }
+
+      #createBtn {
+        background-color: var(--accent);
+        color: black;
+        width: 100%;
+      }
+
+      #createBtn:hover {
+        background-color: var(--accent-hover);
+      }
+
+      #generateImgBtn {
+        background-color: #4a5568;
+        color: white;
+        padding: 0.8rem;
+        margin-bottom: 1rem;
+        white-space: nowrap;
+      }
+
+      #generateImgBtn:hover {
+        background-color: #5a6578;
+      }
+
+      #generateImgBtn:disabled {
+        background-color: #333;
+        cursor: not-allowed;
+      }
+
+      /* --- CAMPAIGN CARD STYLES --- */
+      #campaignsList {
+        margin-top: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .campaign-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 300px;
+        position: relative;
+      }
+
+      .campaign-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .edit-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        font-size: 1.2rem;
+        font-family: sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 10;
+      }
+
+      .campaign-card:hover .edit-icon {
+        opacity: 1;
+      }
+
+      .campaign-image {
+        height: 180px;
+        width: 100%;
+        background-color: var(--bg-dark);
+        background-size: cover;
+        background-position: center;
+      }
+
+      .campaign-content {
+        padding: 1rem 1.5rem;
+        flex-grow: 1;
+      }
+
+      .campaign-content h3 {
+        margin: 0 0 0.5rem 0;
+        padding: 0;
+        text-align: left;
+        font-size: 1.2rem;
+        font-family: "Cinzel", serif;
+        color: var(--text-primary);
+      }
+
+      .campaign-content p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        text-align: left;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      #status {
+        text-align: center;
+        color: var(--text-secondary);
+        margin-top: 2rem;
+      }
+
+      /* UPDATED: Modal styles for consistency */
+      #editModal {
+        position: fixed;
+        z-index: 1001;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        align-items: center;
+        justify-content: center;
+      }
+      #editModal .form-container {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 2rem;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      #editModal h2 {
+        font-size: 1.8rem;
+        text-align: center;
+        color: var(--text-primary);
+        font-family: "Cinzel", serif;
+        margin-top: 0;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+      }
+      #editModal p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+      #editModal textarea {
+        margin-bottom: 1.5rem;
+      }
+      #editModal #updateImgBtn {
+        background-color: var(--accent);
+        color: black;
+        width: 100%;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      #editModal #updateImgBtn:hover {
+        background-color: var(--accent-hover);
+      }
+      #editModal #cancelEditBtn {
+        background-color: #5a6578;
+        color: white;
+        width: 100%;
+        font-weight: 600;
+      }
+      #editModal #cancelEditBtn:hover {
+        background-color: #6a7588;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a class="navbar-brand" href="/index.html">NPC AI Dashboard</a>
+        <div class="nav-links">
+          <a class="nav-link" href="/index.html">Home</a>
+          <a class="nav-link active" href="/campaigns.html">My Campaigns</a>
+          <a class="nav-link" href="/community.html">Templates</a>
+          <a class="nav-link" href="/guide.html">Guide</a>
+          <a class="nav-link upgrade-link" href="/subscribe.html">Upgrade</a>
+        </div>
+        <div class="nav-user-info">
+          <span id="userEmail" class="navbar-text"></span>
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <h1>My Campaigns</h1>
+      <div class="form-container">
+        <h2>Create a New Campaign</h2>
+        <form id="campaignForm">
+          <input
+            type="text"
+            id="campaignName"
+            placeholder="Campaign Name"
+            required
+          />
+          <textarea
+            id="campaignDescription"
+            placeholder="A brief description of your campaign world..."
+          ></textarea>
+
+          <div>
+            <label
+              for="campaignImageUpload"
+              style="
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+                display: block;
+                text-align: left;
+                margin-bottom: 0.5rem;
+              "
+            >
+              Campaign Cover Image (Optional)
+            </label>
+            <input
+              type="file"
+              id="campaignImageUpload"
+              accept="image/png, image/jpeg, image/webp"
+              style="
+                margin-bottom: 1rem;
+                background-color: var(--card-bg);
+                padding: 0.5rem;
+              "
+            />
+            <p
+              id="uploadStatus"
+              style="font-size: 0.8rem; color: var(--accent); height: 16px"
+            ></p>
+          </div>
+
+          <input type="hidden" id="campaignImageUrl" />
+          <button id="createBtn" type="submit">Create Campaign</button>
+        </form>
+      </div>
+      <h2>Select a Campaign</h2>
+      <div id="campaignsList"></div>
+      <p id="status">Loading your campaigns...</p>
+    </div>
+
+    <!-- Modal visibility handled by class instead of inline style -->
+    <div id="editModal" style="display: none">
+      <div class="form-container" style="width: 90%; max-width: 500px">
+        <h2 style="margin-top: 0">Edit Campaign Image</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem">
+          Enter a new description below to generate a new cover image for this
+          campaign.
+        </p>
+        <textarea
+          id="editDescription"
+          placeholder="A new, detailed description for the image..."
+        ></textarea>
+        <button id="updateImgBtn">Generate & Update Image</button>
+        <button id="cancelEditBtn">Cancel</button>
+      </div>
+    </div>
+
+    <script>
+      // This file now relies on auth.js for API_BASE_URL and secureFetch.
+      // No local definitions are needed.
+
+      const campaignForm = document.getElementById("campaignForm");
+      const campaignsList = document.getElementById("campaignsList");
+      const status = document.getElementById("status");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const userEmailSpan = document.getElementById("userEmail");
+
+      // Updated constants for the new form
+      const campaignNameInput = document.getElementById("campaignName");
+      const campaignDescriptionInput = document.getElementById(
+        "campaignDescription",
+      );
+      const campaignImageUploadInput = document.getElementById(
+        "campaignImageUpload",
+      );
+      const campaignImageUrlInput = document.getElementById("campaignImageUrl");
+      const uploadStatus = document.getElementById("uploadStatus");
+
+      // Edit modal
+      const editModal = document.getElementById("editModal");
+      const updateImgBtn = document.getElementById("updateImgBtn");
+      const cancelEditBtn = document.getElementById("cancelEditBtn");
+      const editDescription = document.getElementById("editDescription");
+      let campaignIdForEdit = null;
+
+      async function initializePage() {
+        const session = await getUserSession(); // getUserSession from auth.js
+        if (session) {
+          userEmailSpan.textContent = session.user.email;
+        }
+        loadCampaigns();
+      }
+
+      async function loadCampaigns() {
+        try {
+          const response = await secureFetch("/get-campaigns");
+          if (!response.ok) throw new Error("Could not fetch campaigns.");
+          const campaigns = await response.json();
+          renderCampaigns(campaigns);
+          status.textContent = "";
+        } catch (error) {
+          console.error("Error loading campaigns:", error);
+          status.textContent = "Error loading campaigns.";
+        }
+      }
+
+      function renderCampaigns(campaigns) {
+        campaignsList.innerHTML = "";
+        if (campaigns.length === 0) {
+          status.textContent = "You haven't created any campaigns yet.";
+          return;
+        }
+        campaigns.forEach((campaign) => {
+          const card = document.createElement("div");
+          card.className = "campaign-card";
+          card.innerHTML = `
+            <div class="campaign-image" style="background-image: url('${
+              campaign.imageUrl || "https://i.imgur.com/8nLFCVP.png"
+            }')"></div>
+            <div class="campaign-content">
+                <h3>${campaign.name}</h3>
+                <p>${campaign.description || "No description provided."}</p>
+            </div>
+            <div class="edit-icon" data-id="${campaign.id}" title="Edit cover">✎</div>
+          `;
+          // Navigate to library when clicking the card (not the edit icon)
+          card.addEventListener("click", (e) => {
+            if (e.target.closest(".edit-icon")) return; // handled separately
+            sessionStorage.setItem(
+              "selectedCampaign",
+              JSON.stringify(campaign),
+            );
+            window.location.href = "/library.html";
+          });
+          campaignsList.appendChild(card);
+        });
+      }
+
+      // Open edit modal
+      document.addEventListener("click", (e) => {
+        const icon = e.target.closest(".edit-icon");
+        if (!icon) return;
+        e.stopPropagation();
+        campaignIdForEdit = icon.getAttribute("data-id");
+        editDescription.value = "";
+        editModal.style.display = "flex";
+      });
+
+      // Cancel modal
+      cancelEditBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        editModal.style.display = "none";
+        campaignIdForEdit = null;
+      });
+
+      // Generate & update campaign image
+      updateImgBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (!campaignIdForEdit) return;
+        const description = editDescription.value.trim();
+        if (!description) {
+          alert("Please enter a description for the new image.");
+          return;
+        }
+        updateImgBtn.disabled = true;
+        updateImgBtn.textContent = "Generating...";
+
+        try {
+          const response = await secureFetch("/generate-campaign-image", {
+            method: "POST",
+            body: JSON.stringify({
+              campaignId: campaignIdForEdit,
+              description,
+            }),
+          });
+          const result = await response.json();
+          if (!response.ok)
+            throw new Error(result.error || "Failed to generate image.");
+          // refresh campaigns list
+          await loadCampaigns();
+          editModal.style.display = "none";
+        } catch (err) {
+          console.error("Error generating/updating campaign image:", err);
+          alert("Error generating/updating campaign image: " + err.message);
+        } finally {
+          updateImgBtn.disabled = false;
+          updateImgBtn.textContent = "Generate & Update Image";
+        }
+      });
+
+      // Cover upload during creation
+      campaignImageUploadInput.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        uploadStatus.textContent = "Uploading...";
+        const formData = new FormData();
+        formData.append("campaignImage", file);
+
+        try {
+          const response = await secureFetch("/upload-campaign-image", {
+            method: "POST",
+            body: formData,
+          });
+
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Upload failed.");
+
+          campaignImageUrlInput.value = result.imageUrl;
+          uploadStatus.textContent = "Upload successful!";
+        } catch (error) {
+          console.error("Upload error:", error);
+          alert("Image upload failed: " + error.message);
+          uploadStatus.textContent = "Upload failed. Please try again.";
+        }
+      });
+
+      campaignForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = campaignNameInput.value.trim();
+        const description = campaignDescriptionInput.value.trim();
+        const imageUrl = campaignImageUrlInput.value.trim();
+        if (!name) return;
+
+        const campaignData = { name, description };
+        if (imageUrl) {
+          campaignData.imageUrl = imageUrl;
+        }
+
+        const createBtn = document.getElementById("createBtn");
+        createBtn.disabled = true;
+        createBtn.textContent = "Creating...";
+
+        try {
+          const response = await secureFetch("/create-campaign", {
+            method: "POST",
+            body: JSON.stringify(campaignData),
+          });
+          if (!response.ok) throw new Error("Failed to create campaign.");
+
+          campaignForm.reset();
+          uploadStatus.textContent = "";
+          loadCampaigns();
+        } catch (error) {
+          console.error("Error creating campaign:", error);
+          alert("Could not create the campaign.");
+        } finally {
+          createBtn.disabled = false;
+          createBtn.textContent = "Create Campaign";
+        }
+      });
+
+      logoutBtn.addEventListener("click", async () => {
+        // This call talks directly to Supabase Auth, not your backend API.
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+          console.error("Error logging out:", error);
+        } else {
+          window.location.href = "/index.html";
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", initializePage);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Guide - NPC AI Platform</title>
+
+    <!-- Fonts to match consistent app theme -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/auth.js" defer></script>
+
+    <style>
+      :root {
+        --bg-dark: #0d0d0d;
+        --card-bg: #2b2b2b;
+        --text-primary: #f1f1f1;
+        --text-secondary: #cccccc;
+        --accent: #ffc107;
+        --accent-hover: #e6b800;
+        --border-color: #444;
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        /* --- NEW: BACKGROUND IMAGE WITH DARK OVERLAY --- */
+        background-image:
+          linear-gradient(rgba(13, 13, 13, 0.9), rgba(13, 13, 13, 0.9)),
+          url("/assets/background_b.png");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed; /* Prevents image from scrolling with content */
+
+        color: var(--text-primary);
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding-top: 80px;
+      }
+
+      /* --- NAVBAR --- */
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: rgba(13, 13, 13, 0.95);
+        padding: 0.75rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+      }
+      .nav-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .navbar-brand {
+        font-family: "Cinzel", serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        text-decoration: none;
+      }
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+      }
+      .nav-link {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: color 0.2s ease;
+      }
+      .nav-link:hover,
+      .nav-link.active,
+      .nav-link.upgrade-link {
+        color: var(--accent);
+      }
+      .nav-link.upgrade-link:hover {
+        color: var(--accent-hover);
+      }
+      .logout-btn {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .logout-btn:hover {
+        background-color: #383c42;
+      }
+      .nav-user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      /* --- GUIDE CONTENT --- */
+      .guide-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 1rem 3rem 3rem 3rem;
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: "Cinzel", serif;
+        color: var(--accent);
+      }
+      h1 {
+        font-size: 2.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 1rem;
+      }
+      h2 {
+        font-size: 1.8rem;
+        margin-top: 3rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+      }
+      h3 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-top: 2rem;
+      }
+      h4 {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-top: 1.5rem;
+      }
+      p,
+      li {
+        line-height: 1.7;
+        color: var(--text-secondary);
+        font-size: 1.05rem;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      a:hover {
+        color: var(--accent-hover);
+      }
+      .toc-list {
+        list-style: none;
+        padding: 0;
+      }
+      .toc-list li a {
+        font-family: "Cinzel", serif;
+        font-size: 1.2rem;
+      }
+      .guide-list {
+        padding-left: 20px;
+      }
+      .guide-list li {
+        margin-bottom: 0.75rem;
+      }
+      .guide-links {
+        text-align: center;
+        margin-top: 2rem;
+      }
+      footer {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <a class="navbar-brand" href="/index.html">NPC AI Dashboard</a>
+        <div class="nav-links">
+          <a class="nav-link" href="/index.html">Home</a>
+          <a class="nav-link" href="/campaigns.html">My Campaigns</a>
+          <a class="nav-link" href="/community.html">Templates</a>
+          <a class="nav-link active" href="/guide.html">Guide</a>
+          <a class="nav-link upgrade-link" href="/subscribe.html">Upgrade</a>
+        </div>
+        <div class="nav-user-info">
+          <span id="userEmail" class="navbar-text"></span>
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="guide-container">
+      <h1>User Guide</h1>
+      <p>
+        Welcome to the NPC AI Platform! This guide will help you get started
+        with the core features of the application and master the art of creating
+        living, breathing characters.
+      </p>
+
+      <h3>Table of Contents</h3>
+      <ul class="toc-list">
+        <li><a href="#campaigns">1. Managing Campaigns</a></li>
+        <li><a href="#npcs">2. Creating & Managing NPCs</a></li>
+        <li><a href="#chat">3. Interacting with Your NPCs</a></li>
+        <li><a href="#lore">4. Advanced Lore & Memory</a></li>
+        <li><a href="#community">5. The Community Hub</a></li>
+      </ul>
+
+      <h2 id="campaigns">1. Managing Campaigns</h2>
+      <p>
+        Campaigns are the containers for your worlds. Every NPC you create must
+        belong to a campaign. This is the first step in building your story.
+      </p>
+      <h4>Creating a Campaign</h4>
+      <p>
+        On your main dashboard, you'll find the "Create a New Campaign" form.
+        Simply provide a name and an optional description for your world. You
+        can also upload a custom cover image to give your campaign a unique
+        visual identity.
+      </p>
+
+      <h2 id="npcs">2. Creating & Managing NPCs</h2>
+      <p>
+        Once you select a campaign, you will be taken to its NPC Library. This
+        is where all the characters for that specific world live.
+      </p>
+      <h3>The NPC Creator</h3>
+      <p>
+        Clicking "Create New NPC" opens the creator form, where you define the
+        soul of your character.
+      </p>
+      <h4>Core Identity & Personality</h4>
+      <p>
+        Define the basics like Name, Race, Appearance, and Voice. More
+        importantly, define their <strong>Goals</strong>,
+        <strong>Secrets</strong>, and
+        <strong>Personality Archetypes</strong> (Essence vs. Facade). These are
+        not just flavor text—they are the core instructions the AI will use to
+        guide the NPC's behavior and dialogue.
+      </p>
+
+      <h4>Managing Inventory</h4>
+      <p>
+        The "Personal Inventory" section is where you equip your NPC. This is a
+        crucial part of their identity and memory.
+      </p>
+      <ul class="guide-list">
+        <li>
+          <strong>To Add an Item:</strong> Type the item's name into the input
+          field (e.g., "Rusty Key" or "Health Potion") and click the "Add"
+          button.
+        </li>
+        <li>
+          <strong>To Remove an Item:</strong> A list of current items will be
+          displayed. Simply click the "Remove" button next to any item to delete
+          it from their inventory.
+        </li>
+        <li>
+          <strong>In-Chat Changes:</strong> Be aware that the AI can also add or
+          remove items from its own inventory during a conversation based on
+          your interactions!
+        </li>
+      </ul>
+
+      <h2 id="chat">3. Interacting with Your NPCs</h2>
+      <p>
+        The chat interface is where your creations come to life. You can speak
+        to your NPCs using either voice or text.
+      </p>
+      <h3>The DM's Insight Engine</h3>
+      <p>
+        This is one of the most powerful tools at your disposal. Every time an
+        NPC speaks, an eye icon (👁️) will appear next to their dialogue.
+        Clicking this icon reveals the NPC's true thoughts, feelings, or hidden
+        motivations behind what they just said. Use this to guide your
+        roleplaying and stay one step ahead of your players.
+      </p>
+
+      <h2 id="lore">4. Advanced Lore & Memory</h2>
+      <p>
+        Give your NPCs a deep connection to your world with advanced knowledge
+        management tools, accessible from the NPC Library.
+      </p>
+      <ul class="guide-list">
+        <li>
+          <strong>Lore Locks:</strong> These are unbreakable, campaign-wide
+          truths. Facts entered here (e.g., "The King is secretly a dragon")
+          MUST be followed by every NPC in the campaign, ensuring consistency.
+        </li>
+        <li>
+          <strong>Lore Documents:</strong> Upload a text or PDF file containing
+          specific knowledge for a single NPC. This is perfect for giving a
+          historian deep knowledge of ancient ruins or a guard captain detailed
+          information about a recent crime.
+        </li>
+        <li>
+          <strong>Memory Ledger:</strong> This is the NPC's personal diary. At
+          the end of a chat session, the AI can generate a summary of what it
+          learned, or you can add manual entries. These memories directly
+          influence future conversations.
+        </li>
+      </ul>
+
+      <h2 id="community">5. The Community Hub</h2>
+      <p>
+        The Community Hub is where you can share your creations and discover
+        NPCs made by other users.
+      </p>
+      <ul class="guide-list">
+        <li>
+          <strong>Share to Hub:</strong> In your NPC Library, click the "Share
+          to Hub" button on any NPC card to make it public for others to see and
+          use.
+        </li>
+        <li>
+          <strong>Clone to My Library:</strong> On the Templates page, you can
+          browse public NPCs. Clicking "Clone to My Library" will create a
+          private copy of that NPC in one of your own campaigns, which you can
+          then modify and use freely.
+        </li>
+      </ul>
+
+      <div class="guide-links">
+        <p>
+          Ready to start?
+          <a href="/campaigns.html">Go to your Campaigns Dashboard!</a>
+        </p>
+      </div>
+    </div>
+
+    <footer>&copy; 2024 NPC AI. All rights reserved.</footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const userEmailSpan = document.getElementById("userEmail");
+        if (userEmailSpan) {
+          const session = await getUserSession();
+          if (session) {
+            userEmailSpan.textContent = session.user.email;
+          }
+        }
+      });
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+          await supabaseClient.auth.signOut();
+          window.location.href = "/index.html";
+        });
+      }
+    </script>
+  </body>
+</html>

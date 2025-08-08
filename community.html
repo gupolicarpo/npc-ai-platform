@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Hub – NPC Templates</title>
+
+    <!-- Fonts (Inter + Cinzel) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Cinzel:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Supabase + auth helper (auth.js now defines secureFetch globally) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/auth.js" defer></script>
+
+    <style>
+      /* ───────── ROOT TOKENS (PRESERVED YOUR PREFERRED STYLES) ───────── */
+      :root {
+        --bg-dark: #0d0d0d;
+        --card-bg: #d7c9a8; /* <-- REVERTED to your preferred light card background */
+        --text-primary: #f1f1f1; /* Main page text */
+        --text-secondary: #cccccc; /* Secondary page text */
+        --accent: #ffc107; /* Your accent color, used for yellow buttons */
+        --accent-hover: #e6b800; /* Hover for accent */
+        --border-color: #4a3c2b; /* Original template border color for cards/modals */
+      }
+
+      /* ───────── BASE LAYOUT ───────── */
+      body {
+        margin: 0;
+        padding: 0 2rem;
+        padding-top: 80px; /* ← same as campaigns.html for header space */
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        font-family: "Inter", sans-serif;
+        line-height: 1.7;
+      }
+
+      /* ───────── NAVBAR (Updated for consistent branding and links) ───────── */
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: rgba(13, 13, 13, 0.95);
+        padding: 0.75rem 2rem;
+        border-bottom: 1px solid #222; /* <-- Keeping #222 as it matches campaigns.html's navbar border */
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+      }
+      .nav-container {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .navbar-brand {
+        font-family: "Cinzel", serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white; /* Logo text color */
+        text-decoration: none;
+      }
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+      }
+      .nav-link {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        transition: color 0.2s ease;
+      }
+      .nav-link:hover {
+        color: var(--accent);
+      }
+      .nav-link.active,
+      .nav-link.upgrade-link {
+        color: var(--accent);
+      }
+      .nav-link.upgrade-link:hover {
+        color: var(--accent-hover);
+      }
+      .logout-btn {
+        background-color: var(
+          --card-bg
+        ); /* This will be the light card color */
+        border: 1px solid var(--border-color);
+        color: #3d2e1a; /* <-- Adjusted for readability on light button */
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .logout-btn:hover {
+        background-color: #c9bda0; /* Slightly darker hover for light button */
+      }
+
+      /* ───────── PAGE TITLE (Consistent with campaigns.html) ───────── */
+      h1 {
+        font-family: "Cinzel", serif;
+        font-size: 2.5rem;
+        color: var(
+          --text-primary
+        ); /* Page title remains consistent with dark theme text */
+        text-align: center;
+        margin: 2rem 0 1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+      }
+
+      /* ───────── CONTENT (Gallery + Cards - SIZES ADJUSTED, COLORS PRESERVED) ───────── */
+      .container {
+        max-width: 1200px; /* Wider gallery view */
+        margin: 0 auto;
+        padding: 0 1rem; /* Added padding to align with campaigns.html content area */
+      }
+      p.intro {
+        text-align: center;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+      }
+      #loadingStatus {
+        text-align: center;
+        color: var(--text-secondary);
+        margin-top: 1rem;
+      }
+
+      #npc-gallery {
+        display: grid;
+        grid-template-columns: repeat(
+          auto-fill,
+          minmax(280px, 1fr)
+        ); /* <-- CORRECTED: Matches campaign cards grid width */
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+      .npc-card {
+        background: var(--card-bg)
+          url("https://www.transparenttextures.com/patterns/old-paper.png"); /* <-- PRESERVED: Your preferred background texture */
+        border: 2px solid var(--border-color); /* <-- PRESERVED: Your preferred 2px border */
+        border-radius: 8px; /* <-- PRESERVED: Your preferred 8px border-radius */
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* <-- PRESERVED: Your preferred box-shadow */
+        display: flex;
+        flex-direction: column;
+        height: 400px; /* <-- CORRECTED: Fixed height to match campaign cards */
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .npc-card:hover {
+        transform: translateY(-5px); /* <-- PRESERVED: Hover effect */
+        border-color: var(--accent);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+      .card-image {
+        width: 100%;
+        height: 250px; /* <-- CORRECTED: Image height to match campaign cards */
+        object-fit: cover;
+        border-bottom: 2px solid var(--border-color); /* <-- PRESERVED: Your preferred 2px border */
+      }
+      .card-content {
+        padding: 1rem 1.5rem; /* <-- Adjusted padding for visual balance */
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .card-content h3 {
+        margin: 0 0 0.75rem;
+        font-family: "Cinzel", serif;
+        text-align: center; /* <-- PRESERVED: Your preferred text alignment */
+        color: #5c2c1a; /* <-- PRESERVED: Your preferred heading text color for light cards */
+        font-size: 1.2rem; /* <-- Adjusted font size for balance */
+      }
+      .card-buttons {
+        margin-top: auto; /* Push button to the bottom */
+      }
+      .clone-button {
+        width: 100%;
+        padding: 0.75rem; /* <-- PRESERVED padding */
+        font-family: "Cinzel", serif; /* <-- PRESERVED font family */
+        font-weight: 700; /* <-- PRESERVED font weight */
+        font-size: 0.9rem; /* <-- PRESERVED font size */
+        background: var(--accent); /* <-- PRESERVED: Uses accent for yellow */
+        color: black; /* <-- PRESERVED: Black text on yellow */
+        border: 1px solid #8a6d4c; /* <-- PRESERVED: Specific border */
+        border-radius: 4px; /* <-- PRESERVED: Specific border-radius */
+        cursor: pointer;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* <-- PRESERVED: Text shadow */
+        transition: background-color 0.2s;
+      }
+      .clone-button:hover {
+        background: var(--accent-hover); /* <-- PRESERVED: Accent hover */
+      }
+
+      .back-link {
+        display: block;
+        text-align: center;
+        margin: 2rem 0;
+        font-family:
+          "Cinzel", serif; /* <-- PRESERVED: Your preferred font family */
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 700; /* <-- Adjusted font weight for consistency with other Cinzel text */
+      }
+      .back-link:hover {
+        color: var(--accent-hover);
+      }
+
+      /* ───────── MODAL (REVERTED TO YOUR ORIGINAL, PREFERRED STYLES) ───────── */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6); /* <-- PRESERVED */
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1002;
+      }
+      .modal-content {
+        background: #1e1915; /* <-- PRESERVED: Specific dark background */
+        border: 2px solid var(--border-color); /* <-- PRESERVED: Specific border */
+        border-radius: 8px; /* <-- PRESERVED: Specific border-radius */
+        padding: 2rem;
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        font-family: "Cinzel", serif; /* <-- PRESERVED: Specific font family */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* <-- PRESERVED */
+      }
+      .modal-content h3 {
+        margin: 0 0 1rem;
+        color: var(--accent); /* <-- PRESERVED: Accent color for modal title */
+        font-family: "Cinzel", serif; /* <-- PRESERVED */
+      }
+      .modal-content select {
+        width: 100%;
+        padding: 0.8rem;
+        background: var(
+          --card-bg
+        ); /* <-- PRESERVED: Light card color for select */
+        border: 1px solid #8a6d4c; /* <-- PRESERVED: Specific border */
+        border-radius: 4px; /* <-- PRESERVED: Specific border-radius */
+        color: #3d2e1a; /* <-- PRESERVED: Dark text on light select */
+        font-family:
+          "Quintessential", cursive; /* <-- PRESERVED: Specific font */
+        font-size: 1.1rem; /* <-- PRESERVED */
+        margin-bottom: 1rem;
+      }
+      .modal-content button {
+        width: 100%;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        font-family: "Cinzel", serif; /* <-- PRESERVED: Specific font */
+        color: var(--text-primary); /* <-- PRESERVED: Light text */
+        border: 1px solid #8a6d4c; /* <-- PRESERVED: Specific border */
+        border-radius: 5px; /* <-- PRESERVED: Specific border-radius */
+        cursor: pointer;
+        transition: background-color 0.2s; /* <-- PRESERVED */
+      }
+      /* Specific button colors for modal actions - PRESERVED */
+      #confirmCloneBtn {
+        background-color: #2a628c;
+      } /* Blue for confirm clone */
+      #confirmCloneBtn:hover {
+        background-color: #3b82af;
+      }
+      #cancelCloneBtn {
+        background-color: #555;
+      } /* Grey for cancel */
+      #cancelCloneBtn:hover {
+        background-color: #777;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- HEADER (Updated for consistent branding and links) -->
+    <nav class="navbar">
+        <div class="nav-links">
+          <a class="nav-link" href="/index.html">Home</a>
+          <a class="nav-link" href="/campaigns.html">My Campaigns</a>
+          <a class="nav-link active" href="/community.html">Templates</a> <!-- "active" class is preserved -->
+          <a class="nav-link" href="/guide.html">Guide</a> <!-- NEW LINK -->
+          <a class="nav-link upgrade-link" href="/subscribe.html">Upgrade</a>
+        </div>
+        <div class="nav-user-info">
+          <span id="userEmail" class="navbar-text"></span>
+          <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- PAGE CONTENT -->
+    <div class="container">
+      <h1>Official NPC Templates</h1>
+      <p class="intro">
+        Browse our pre-made characters to drop directly into your game.
+      </p>
+      <p id="loadingStatus">Loading official templates…</p>
+      <div id="npc-gallery"></div>
+      <a href="/campaigns.html" class="back-link"
+        >← Back to Campaigns Dashboard</a
+      >
+    </div>
+
+    <!-- CLONE MODAL -->
+    <div id="campaignModal" class="modal">
+      <div class="modal-content">
+        <h3>Clone to Which Campaign?</h3>
+        <select id="campaignSelect"></select>
+        <button id="confirmCloneBtn">Confirm Clone</button>
+        <button id="cancelCloneBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+      // === DELETED: Local API_BASE_URL is no longer needed. auth.js provides it. ===
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const gallery = document.getElementById("npc-gallery");
+        const loadingStatus = document.getElementById("loadingStatus");
+        const userEmailSpan = document.getElementById("userEmail");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const campaignModal = document.getElementById("campaignModal");
+        const campaignSelect = document.getElementById("campaignSelect");
+        const confirmCloneBtn = document.getElementById("confirmCloneBtn");
+        const cancelCloneBtn = document.getElementById("cancelCloneBtn");
+
+        let userCampaigns = [],
+          npcIdToClone = null;
+
+        initializePage();
+
+        async function initializePage() {
+          const session = await getUserSession(); // getUserSession from auth.js
+          if (session) userEmailSpan.textContent = session.user.email;
+          loadCommunityNpcs();
+          loadUserCampaigns();
+        }
+
+        async function loadUserCampaigns() {
+          try {
+            // This now uses the global secureFetch from auth.js
+            const res = await secureFetch("/get-campaigns");
+            if (!res.ok) throw new Error("Could not fetch campaigns.");
+            userCampaigns = await res.json();
+            campaignSelect.innerHTML = "";
+            if (userCampaigns.length) {
+              userCampaigns.forEach((c) =>
+                campaignSelect.add(new Option(c.name, c.id)),
+              );
+              confirmCloneBtn.disabled = false;
+            } else {
+              campaignSelect.innerHTML =
+                "<option>No campaigns found. Create one first.</option>";
+              confirmCloneBtn.disabled = true;
+            }
+          } catch (error) {
+            console.error("Error loading campaigns:", error);
+            campaignSelect.innerHTML =
+              "<option>Error loading campaigns.</option>";
+            confirmCloneBtn.disabled = true;
+          }
+        }
+
+        async function loadCommunityNpcs() {
+          try {
+            // This now uses the global secureFetch from auth.js
+            const res = await secureFetch("/get-community-npcs");
+            if (!res.ok) throw new Error("Could not fetch community NPCs.");
+            const npcs = await res.json();
+            gallery.innerHTML = "";
+            if (!npcs.length) {
+              loadingStatus.textContent =
+                "No templates available. Be the first to share!";
+              return;
+            }
+            loadingStatus.style.display = "none";
+            npcs.forEach((npc) => {
+              const card = document.createElement("div");
+              card.className = "npc-card";
+              card.innerHTML = `
+              <img src="${npc.imageUrl}" alt="Avatar for ${npc.name}" class="card-image">
+              <div class="card-content">
+                <h3>${npc.name}</h3>
+                <div class="card-buttons">
+                  <button class="clone-button" data-npc-id="${npc.id}">
+                    Clone to My Library
+                  </button>
+                </div>
+              </div>`;
+              gallery.appendChild(card);
+            });
+          } catch (error) {
+            console.error("Error loading templates:", error);
+            loadingStatus.textContent = "Could not load templates.";
+          }
+        }
+
+        gallery.addEventListener("click", (e) => {
+          if (e.target.classList.contains("clone-button")) {
+            if (!userCampaigns.length) {
+              alert(
+                "You must have at least one campaign to clone into. Please create one first.",
+              );
+              return;
+            }
+            npcIdToClone = e.target.dataset.npcId;
+            campaignModal.style.display = "flex";
+          }
+        });
+
+        cancelCloneBtn.addEventListener("click", () => {
+          campaignModal.style.display = "none";
+          npcIdToClone = null;
+        });
+
+        confirmCloneBtn.addEventListener("click", async () => {
+          const targetCampaignId = campaignSelect.value;
+          if (!npcIdToClone || !targetCampaignId) {
+            alert("Something went wrong. Please try again.");
+            return;
+          }
+          confirmCloneBtn.disabled = true;
+          confirmCloneBtn.textContent = "Cloning…";
+          try {
+            // This now uses the global secureFetch from auth.js
+            const res = await secureFetch("/clone-npc", {
+              method: "POST",
+              body: JSON.stringify({ npcIdToClone, targetCampaignId }),
+            });
+            const out = await res.json();
+            if (!res.ok) throw new Error(out.error || "Cloning failed.");
+            alert(out.message);
+            const camp = userCampaigns.find((c) => c.id === targetCampaignId);
+            sessionStorage.setItem("selectedCampaign", JSON.stringify(camp));
+            window.location.href = "/library.html";
+          } catch (err) {
+            console.error("Error during clone:", err);
+            alert("Could not clone the NPC: " + err.message);
+          } finally {
+            campaignModal.style.display = "none";
+            confirmCloneBtn.disabled = false;
+            confirmCloneBtn.textContent = "Confirm Clone";
+            npcIdToClone = null;
+          }
+        });
+
+        logoutBtn.addEventListener("click", async () => {
+          await supabaseClient.auth.signOut();
+          window.location.href = "/index.html";
+        });
+      });
+    </script>
+  </body>
+</html>

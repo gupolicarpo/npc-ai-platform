@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>NPC AI - Character Creator</title>
+
+        <!-- NEW: Fonts to match consistent app theme -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <!-- auth.js now contains API_BASE_URL and the global secureFetch, and getUserSession -->
+        <script src="/auth.js" defer></script>
+        <style>
+            /* NEW: Consistent root tokens */
+            :root {
+                --bg-dark: #0d0d0d;
+                --card-bg: #2b2b2b; /* General card/form background */
+                --text-primary: #f1f1f1;
+                --text-secondary: #cccccc;
+                --accent: #ffc107;
+                --accent-hover: #e6b800;
+                --border-color: #444; /* General border color */
+
+                /* Specific colors for this page's forms based on previous interactions */
+                --creator-form-bg: #1e1915; /* The darker form background */
+                --creator-border: #4a3c2b; /* Form specific border */
+                --creator-heading: #e6c58a; /* Heading color */
+                --input-bg: #d7c9a8; /* Light input background */
+                --input-border: #8a6d4c; /* Input border */
+                --input-text: #3d2e1a; /* Dark text for light inputs */
+                --input-placeholder: #6a553c; /* Dark placeholder for light inputs */
+            }
+
+            body {
+                background-color: var(--bg-dark);
+                background-image: url("https://www.transparenttextures.com/patterns/dark-leather.png"); /* Keeping this specific background */
+                color: var(--text-primary);
+                font-family: "Inter", sans-serif; /* <-- UPDATED */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 2rem;
+                min-height: 100vh;
+                box-sizing: border-box;
+            }
+            .creator-form {
+                background-color: var(--creator-form-bg); /* <-- UPDATED */
+                border: 2px solid var(--creator-border); /* <-- UPDATED */
+                padding: 2rem;
+                border-radius: 12px; /* <-- UPDATED for consistency */
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6); /* <-- UPDATED */
+                width: 100%;
+                max-width: 700px;
+            }
+            h1,
+            h2 {
+                font-family: "Cinzel", serif; /* <-- UPDATED */
+                color: var(--creator-heading); /* <-- UPDATED */
+                text-align: center;
+                border-bottom: 2px solid var(--creator-border); /* <-- UPDATED */
+                padding-bottom: 1rem;
+                margin-top: 0;
+                letter-spacing: 2px;
+                text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+            }
+            h2 {
+                font-size: 1.8rem; /* <-- UPDATED for consistency with campaigns */
+                margin-top: 2rem;
+                border-bottom-style: dashed;
+            }
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            .form-row {
+                display: flex;
+                gap: 1rem;
+            }
+            .form-row .form-group {
+                flex: 1;
+            }
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 600; /* <-- UPDATED */
+                color: var(--text-secondary); /* <-- UPDATED */
+                font-family: "Inter", sans-serif; /* <-- UPDATED */
+            }
+            input,
+            select,
+            textarea {
+                width: 100%;
+                padding: 0.8rem 1rem; /* <-- UPDATED */
+                background-color: var(--input-bg); /* <-- UPDATED */
+                background-image: url("https://www.transparenttextures.com/patterns/old-paper.png"); /* Keeping this texture */
+                border: 1px solid var(--input-border); /* <-- UPDATED */
+                color: var(--input-text); /* <-- UPDATED */
+                border-radius: 6px; /* <-- UPDATED */
+                font-family: "Inter", sans-serif; /* <-- UPDATED */
+                font-size: 1rem; /* <-- UPDATED */
+                box-sizing: border-box;
+                transition:
+                    border-color 0.2s,
+                    box-shadow 0.2s; /* <-- ADDED */
+            }
+            input::placeholder,
+            textarea::placeholder {
+                color: var(--input-placeholder); /* <-- UPDATED */
+            }
+            input:focus, /* <-- ADDED for consistency */
+            textarea:focus, /* <-- ADDED for consistency */
+            select:focus {
+                /* <-- ADDED for consistency */
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+            }
+            select {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234a3c2b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+                background-repeat: no-repeat;
+                background-position: right 0.7em top 50%;
+                background-size: 0.65em auto;
+            }
+            textarea {
+                resize: vertical;
+                min-height: 80px;
+            }
+            button {
+                width: 100%;
+                padding: 1rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                background-color: var(
+                    --accent
+                ); /* <-- UPDATED for consistency */
+                color: black; /* <-- UPDATED for consistency */
+                border: none; /* <-- UPDATED */
+                border-radius: 6px; /* <-- UPDATED */
+                margin-top: 1rem;
+                transition: background-color 0.2s; /* <-- UPDATED */
+                font-family: "Inter", sans-serif; /* <-- UPDATED */
+                font-weight: 600; /* <-- UPDATED */
+                box-shadow: none; /* <-- REMOVED */
+            }
+            button:hover {
+                background-color: var(--accent-hover); /* <-- UPDATED */
+            }
+            button:disabled {
+                background-color: #333;
+                cursor: not-allowed;
+            }
+            .back-link {
+                text-align: center;
+                display: block;
+                margin-top: 2rem;
+                color: var(--accent); /* <-- UPDATED */
+                font-size: 1rem; /* <-- UPDATED */
+                font-family: "Inter", sans-serif; /* <-- UPDATED */
+                font-weight: 600; /* <-- ADDED */
+                text-decoration: none; /* <-- ADDED */
+            }
+            .back-link:hover {
+                /* <-- ADDED */
+                color: var(--accent-hover);
+            }
+
+            /* Inventory List Styling */
+            #inventory-list {
+                list-style: none;
+                padding: 0;
+                margin-top: 0.5rem;
+                border: 1px solid var(--input-border); /* Added border */
+                background-color: var(--input-bg); /* Added background */
+                border-radius: 4px;
+                padding: 0.5rem;
+            }
+            #inventory-list li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px dashed var(--input-border);
+                color: var(--input-text); /* Ensure text is readable */
+            }
+            #inventory-list li:last-child {
+                border-bottom: none;
+            }
+            #inventory-list li button {
+                width: auto; /* Override 100% width */
+                padding: 0.2rem 0.5rem;
+                font-size: 0.8rem;
+                margin-top: 0;
+                background-color: #dc3545; /* Red for remove button */
+                color: white;
+                border: none;
+                border-radius: 4px;
+            }
+            #inventory-list li button:hover {
+                background-color: #c82333;
+            }
+            .btn-primary {
+                /* Adjusting button styles from bootstrap-like classes */
+                background-color: #2a628c; /* Blue for Add button */
+                color: white;
+                border: none;
+            }
+            .btn-primary:hover {
+                background-color: #3b82af;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="creator-form">
+            <h1 id="creatorTitle">Create New NPC</h1>
+            <form id="npc-creator-form">
+                <h2>Core Identity</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="npcName">Character's Name</label>
+                        <input type="text" id="npcName" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="npcRace">Race</label>
+                        <select id="npcRace" required>
+                            <option value="Human" selected>Human</option>
+                            <option value="Elf">Elf</option>
+                            <option value="Dwarf">Dwarf</option>
+                            <option value="Orc">Orc</option>
+                            <option value="Halfling">Halfling</option>
+                            <option value="Gnome">Gnome</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="npcAppearance">Appearance</label>
+                    <textarea
+                        id="npcAppearance"
+                        required
+                        placeholder="Ex: An old man with a long grey beard..."
+                    ></textarea>
+                </div>
+                <h2>Voice</h2>
+                <div class="form-group">
+                    <label for="voiceId">Choose a Voice Template</label>
+                    <select id="voiceId" required>
+                        <option value="Y67PLy9Xbs2hsVWPnhTt">
+                            Tavern Keeper
+                        </option>
+                        <option value="xLMNRrSfken5kXei90qJ">
+                            Evil Old Female
+                        </option>
+                        <option value="pQJxbq4NX1RC5ZNsDILP">
+                            Ancient Spirit
+                        </option>
+                        <option value="y5s9xXWh6A5S2CcJIefl">
+                            Young Male Scout
+                        </option>
+                        <option value="wMgZ1CSKt16UzGxYY8rw">
+                            Male Android
+                        </option>
+                        <option value="XzOUQLH90kaGP4Sr222l">Undead</option>
+                        <option value="jjcdJxji8sXSEpp9IKTc">Male Druid</option>
+                        <option value="BwN2opytGC6AhviCJiPv">
+                            Male Paladin
+                        </option>
+                        <option value="BwN2opytGC6AhviCJiPv">Dragon</option>
+                        <option value="tFez39ZeM9587C8erRQ3">
+                            Ancient Female Wisdom
+                        </option>
+                        <option value="e7lOKEbZnWHfntF9k09u">
+                            Little Fairy
+                        </option>
+                    </select>
+                </div>
+                <h2>Campaign & Personality</h2>
+                <div class="form-group">
+                    <label for="npcBackground"
+                        >Background / Personal History</label
+                    >
+                    <textarea id="npcBackground" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="npcGoals">🎯 NPC's Goals</label>
+                    <textarea id="npcGoals" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="initialAttitude">🤝 Initial Attitude</label>
+                    <select id="initialAttitude" required>
+                        <option value="Friendly and helpful">
+                            Friendly & Helpful
+                        </option>
+                        <option value="Suspicious and cautious">
+                            Suspicious & Cautious
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>🎒 Personal Inventory</label>
+                    <ul id="inventory-list"></ul>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem">
+                        <input
+                            id="new-item"
+                            placeholder="Add item..."
+                            class="form-control"
+                        />
+                        <button
+                            type="button"
+                            id="add-item-btn"
+                            class="btn btn-primary"
+                        >
+                            Add
+                        </button>
+                    </div>
+                    <!-- Hidden legacy field to preserve save flow -->
+                    <textarea
+                        id="npcInventory"
+                        style="display: none"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="commonKnowledge"
+                        >Common Knowledge (Easily Shared)</label
+                    >
+                    <textarea
+                        id="commonKnowledge"
+                        placeholder="Ex: Rumors about town, local gossip..."
+                    ></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="guardedSecrets"
+                        >🧠 Guarded Secrets (Difficult to Reveal)</label
+                    >
+                    <textarea
+                        id="guardedSecrets"
+                        required
+                        placeholder="Ex: The location of the treasure..."
+                    ></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="essence">Essence (True Self)</label>
+                        <select id="essence" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="facade">Facade (Social Mask)</label>
+                        <select id="facade" required></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="worldContext">Universe Context</label>
+                    <textarea id="worldContext" required></textarea>
+                </div>
+                <button type="submit" id="generateBtn">
+                    Generate, Save & Go to Chat
+                </button>
+                <p id="loadingStatus" style="display: none; color: #d4a373">
+                    Loading...
+                </p>
+            </form>
+            <a href="/library.html" class="back-link"
+                >← Cancel and Go Back to Library</a
+            >
+        </div>
+        <script>
+            const archetypes = {
+                commander: "Commander",
+                sovereign: "Sovereign",
+                courtier: "Courtier",
+                socialite: "Socialite",
+                arbitrator: "Arbitrator",
+                fanatic: "Fanatic",
+                outsider: "Outsider",
+                survivor: "Survivor",
+                guardian: "Guardian",
+                mentor: "Mentor",
+                visionary: "Visionary",
+                artist: "Artist",
+            };
+            const essenceSelect = document.getElementById("essence");
+            const facadeSelect = document.getElementById("facade");
+            for (const key in archetypes) {
+                essenceSelect.add(new Option(archetypes[key], key));
+                facadeSelect.add(new Option(archetypes[key], key));
+            }
+
+            const form = document.getElementById("npc-creator-form");
+            const generateBtn = document.getElementById("generateBtn");
+            const loadingStatus = document.getElementById("loadingStatus");
+            const creatorTitle = document.getElementById("creatorTitle");
+
+            const selectedCampaignString =
+                sessionStorage.getItem("selectedCampaign");
+            if (!selectedCampaignString) {
+                alert("No campaign selected! Please select a campaign first.");
+                window.location.href = "/campaigns.html";
+            }
+            const selectedCampaign = JSON.parse(selectedCampaignString);
+
+            let editMode = false;
+            let npcIdToEdit = null;
+            let existingImageUrl = null;
+
+            document.addEventListener("DOMContentLoaded", async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                npcIdToEdit = urlParams.get("edit_id");
+
+                if (npcIdToEdit) {
+                    editMode = true;
+                    creatorTitle.textContent = "Edit NPC";
+                    generateBtn.textContent = "Save Changes";
+
+                    try {
+                        loadingStatus.textContent = "Loading NPC data...";
+                        loadingStatus.style.display = "block";
+                        const response = await secureFetch(
+                            `/get-npc-details?id=${npcIdToEdit}`,
+                        );
+                        if (!response.ok)
+                            throw new Error("Failed to fetch NPC data.");
+
+                        const npcData = await response.json();
+
+                        document.getElementById("npcName").value =
+                            npcData.name || "";
+                        document.getElementById("npcRace").value =
+                            npcData.race || "Human";
+                        document.getElementById("npcAppearance").value =
+                            npcData.appearance || "";
+                        document.getElementById("voiceId").value =
+                            npcData.voiceId || "Y67PLy9Xbs2hsVWPnhTt";
+                        document.getElementById("npcBackground").value =
+                            npcData.background || "";
+                        document.getElementById("npcGoals").value =
+                            npcData.goals || "";
+                        document.getElementById("initialAttitude").value =
+                            npcData.initialAttitude || "Friendly and helpful";
+                        document.getElementById("npcInventory").value =
+                            npcData.inventory || "";
+                        const items = (npcData.inventory || "")
+                            .split(",")
+                            .map((i) => i.trim())
+                            .filter(Boolean);
+                        refreshInventory(items);
+
+                        document.getElementById("commonKnowledge").value =
+                            npcData.commonKnowledge || "";
+                        document.getElementById("guardedSecrets").value =
+                            npcData.guardedSecrets || "";
+                        document.getElementById("essence").value =
+                            npcData.essence || "survivor";
+                        document.getElementById("facade").value =
+                            npcData.facade || "survivor";
+                        document.getElementById("worldContext").value =
+                            npcData.context || "";
+
+                        existingImageUrl = npcData.imageUrl;
+                        loadingStatus.style.display = "none";
+                    } catch (error) {
+                        console.error("Error loading NPC for edit:", error);
+                        alert("Could not load NPC data: " + error.message);
+                        loadingStatus.style.display = "none";
+                        window.location.href = "/library.html";
+                    }
+                } else {
+                    editMode = false;
+                    creatorTitle.textContent = `Create New NPC for: ${selectedCampaign.name}`;
+                }
+            });
+
+            const refreshInventory = (items) => {
+                const list = document.getElementById("inventory-list");
+                const hiddenField = document.getElementById("npcInventory");
+                list.innerHTML = "";
+                items.forEach((item) => {
+                    const li = document.createElement("li");
+                    li.textContent = item;
+                    const btn = document.createElement("button");
+                    btn.textContent = "Remove";
+                    btn.className = "btn btn-sm btn-danger ms-2";
+                    btn.onclick = () => updateInventory("REMOVE", item);
+                    li.appendChild(btn);
+                    list.appendChild(li);
+                });
+                hiddenField.value = items.join(", ");
+            };
+
+            // === CORRECTED: updateInventory now uses the global secureFetch ===
+            const updateInventory = async (action, item) => {
+                // Check if we are in edit mode; you can't add inventory to an unsaved NPC
+                if (!npcIdToEdit) {
+                    alert(
+                        "You must save the NPC before you can manage their inventory.",
+                    );
+                    return;
+                }
+
+                try {
+                    const res = await secureFetch(`/npc-inventory`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            npcId: npcIdToEdit,
+                            action,
+                            item,
+                        }),
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data.inventory) {
+                        const items = data.inventory
+                            .split(",")
+                            .map((i) => i.trim())
+                            .filter(Boolean);
+                        refreshInventory(items);
+                    } else {
+                        throw new Error(
+                            data.error || "Failed to update inventory.",
+                        );
+                    }
+                } catch (error) {
+                    console.error("Error updating inventory:", error);
+                    alert("Error: " + error.message);
+                }
+            };
+
+            document.getElementById("add-item-btn").onclick = () => {
+                const input = document.getElementById("new-item");
+                const item = input.value.trim();
+                if (item) {
+                    updateInventory("ADD", item);
+                    input.value = "";
+                }
+            };
+
+            form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+                generateBtn.disabled = true;
+                loadingStatus.style.display = "block";
+
+                const npcData = {
+                    name: document.getElementById("npcName").value,
+                    race: document.getElementById("npcRace").value,
+                    appearance: document.getElementById("npcAppearance").value,
+                    voiceId: document.getElementById("voiceId").value,
+                    background: document.getElementById("npcBackground").value,
+                    goals: document.getElementById("npcGoals").value,
+                    initialAttitude:
+                        document.getElementById("initialAttitude").value,
+                    inventory: document.getElementById("npcInventory").value,
+                    commonKnowledge:
+                        document.getElementById("commonKnowledge").value,
+                    guardedSecrets:
+                        document.getElementById("guardedSecrets").value,
+                    essence: document.getElementById("essence").value,
+                    facade: document.getElementById("facade").value,
+                    context: document.getElementById("worldContext").value,
+                };
+
+                try {
+                    if (editMode) {
+                        loadingStatus.textContent = "Saving changes...";
+                        npcData.id = npcIdToEdit;
+                        npcData.imageUrl = existingImageUrl;
+
+                        const updateResponse = await secureFetch(
+                            `/update-npc`,
+                            {
+                                method: "POST",
+                                body: JSON.stringify({ npcData: npcData }),
+                            },
+                        );
+
+                        if (!updateResponse.ok)
+                            throw new Error(
+                                "Failed to update NPC in the database.",
+                            );
+
+                        alert("NPC updated successfully!");
+                        window.location.href = "/library.html";
+                    } else {
+                        loadingStatus.textContent =
+                            "Step 1/2: Generating NPC Avatar...";
+
+                        const imageResponse = await secureFetch(
+                            `/generate-npc-image`,
+                            {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    appearance: npcData.appearance,
+                                    npcData: npcData,
+                                }),
+                            },
+                        );
+
+                        if (!imageResponse.ok)
+                            throw new Error("Failed to generate image.");
+                        const imageResult = await imageResponse.json();
+                        npcData.imageUrl = imageResult.imageUrl;
+
+                        loadingStatus.textContent =
+                            "Step 2/2: Saving NPC to campaign...";
+
+                        const saveResponse = await secureFetch(`/save-npc`, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                npcData: npcData,
+                                campaignId: selectedCampaign.id,
+                            }),
+                        });
+
+                        if (!saveResponse.ok)
+                            throw new Error(
+                                "Failed to save NPC to the database.",
+                            );
+
+                        const savedResult = await saveResponse.json();
+                        const finalNpcData = savedResult.data;
+
+                        sessionStorage.setItem(
+                            "npcData",
+                            JSON.stringify(finalNpcData),
+                        );
+                        window.location.href = "chat.html";
+                    }
+                } catch (error) {
+                    console.error("Error during NPC submission:", error);
+                    alert("There was an error: " + error.message);
+                    generateBtn.disabled = false;
+                    loadingStatus.style.display = "none";
+                }
+            });
+        </script>
+    </body>
+</html>

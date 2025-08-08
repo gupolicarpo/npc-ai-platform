@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Manage NPC Lore</title>
+
+        <!-- Fonts to match consistent app theme -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <!-- auth.js now contains API_BASE_URL and the global secureFetch -->
+        <script src="/auth.js" defer></script>
+        <style>
+            /* NEW: Consistent root tokens */
+            :root {
+                --bg-dark: #0d0d0d;
+                --card-bg: #2b2b2b;
+                --text-primary: #f1f1f1;
+                --text-secondary: #cccccc;
+                --accent: #ffc107;
+                --accent-hover: #e6b800;
+                --border-color: #444;
+            }
+
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-primary);
+                font-family: "Inter", sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 2rem;
+                min-height: 100vh;
+                box-sizing: border-box;
+            }
+            .uploader-container {
+                background-color: var(--card-bg);
+                border: 1px solid var(--border-color);
+                padding: 2rem 3rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+                width: 100%;
+                max-width: 600px;
+                text-align: center;
+            }
+            h1 {
+                font-family: "Cinzel", serif;
+                color: var(--text-primary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 1rem;
+                font-size: 2.2rem;
+                text-shadow: none;
+            }
+            p {
+                color: var(--text-secondary);
+                font-size: 0.95rem;
+            }
+            #upload-form {
+                margin-top: 2rem;
+            }
+
+            .file-input-wrapper {
+                position: relative;
+                overflow: hidden;
+                display: block; /* Changed to block */
+                width: 100%;
+                border: 2px dashed var(--border-color);
+                padding: 2rem;
+                border-radius: 6px;
+                background-color: var(--bg-dark);
+                cursor: pointer;
+                transition: border-color 0.2s;
+            }
+            .file-input-wrapper:hover {
+                border-color: var(--accent);
+            }
+            input[type="file"] {
+                font-size: 100px;
+                position: absolute;
+                left: 0;
+                top: 0;
+                opacity: 0;
+                cursor: pointer;
+            }
+            #fileName {
+                color: var(--accent);
+                font-weight: 600;
+            }
+
+            button {
+                width: 100%;
+                padding: 1rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                margin-top: 1.5rem;
+                transition: background-color 0.2s;
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+                box-shadow: none;
+            }
+            #uploadBtn {
+                background-color: var(--accent);
+                color: black;
+            }
+            #uploadBtn:hover {
+                background-color: var(--accent-hover);
+            }
+            #deleteBtn {
+                background-color: #8c2f2f; /* Red for delete */
+                margin-top: 0;
+            }
+            #deleteBtn:hover {
+                background-color: #b33f3f;
+            }
+            button:disabled {
+                background-color: #333;
+                cursor: not-allowed;
+            }
+            .back-link {
+                display: block;
+                text-align: center;
+                margin-top: 2rem;
+                color: var(--accent);
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+                text-decoration: none;
+            }
+            #status {
+                color: var(--text-secondary);
+                height: 20px;
+                margin-top: 1rem;
+            }
+            .toast {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--card-bg);
+                color: var(--text-primary);
+                padding: 10px 20px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+                display: none;
+                z-index: 9999;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+            .toast.show {
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="uploader-container">
+            <h1 id="upload-title">Manage Lore</h1>
+            <p>
+                To update your NPC's knowledge, first delete the existing lore,
+                then upload a new document.
+            </p>
+
+            <button id="deleteBtn">Step 1: Delete Existing Lore</button>
+
+            <form id="upload-form">
+                <div class="file-input-wrapper">
+                    <span id="fileName"
+                        >Click here to select a .txt or .pdf file</span
+                    >
+                    <input
+                        type="file"
+                        id="loreFile"
+                        name="loreFile"
+                        accept=".txt,.pdf"
+                        required
+                    />
+                </div>
+                <button type="submit" id="uploadBtn">
+                    Step 2: Upload and Process
+                </button>
+            </form>
+            <p id="status"></p>
+
+            <a href="/library.html" class="back-link">← Back to Library</a>
+        </div>
+
+        <div id="toast" class="toast"></div>
+
+        <script>
+            // This file already uses secureFetch correctly.
+            // No changes are needed to the JavaScript.
+
+            const form = document.getElementById("upload-form");
+            const uploadBtn = document.getElementById("uploadBtn");
+            const deleteBtn = document.getElementById("deleteBtn");
+            const status = document.getElementById("status");
+            const fileInput = document.getElementById("loreFile");
+            const fileNameSpan = document.getElementById("fileName");
+            const title = document.getElementById("upload-title");
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const npcId = urlParams.get("npc_id");
+
+            if (!npcId) {
+                title.textContent = "Error: No NPC Selected";
+                form.style.display = "none";
+                deleteBtn.style.display = "none";
+            } else {
+                // Fetch the NPC name to display in the title for better UX
+                secureFetch(`/get-npc-details?id=${npcId}`)
+                    .then((res) => res.json())
+                    .then((npcData) => {
+                        if (npcData && npcData.name) {
+                            title.textContent = `Manage Lore for ${npcData.name}`;
+                        }
+                    })
+                    .catch((err) =>
+                        console.error("Could not fetch NPC name", err),
+                    );
+
+                fileInput.disabled = true;
+                uploadBtn.disabled = true;
+            }
+
+            fileInput.addEventListener("change", () => {
+                fileNameSpan.textContent = fileInput.files[0]
+                    ? fileInput.files[0].name
+                    : "Click here to select a .txt or .pdf file";
+            });
+
+            deleteBtn.addEventListener("click", async () => {
+                const isConfirmed = confirm(
+                    "Are you sure you want to delete all existing lore for this NPC? This action cannot be undone.",
+                );
+                if (!isConfirmed) return;
+                deleteBtn.disabled = true;
+                status.textContent = "Deleting old lore...";
+                try {
+                    const response = await secureFetch(`/delete-lore`, {
+                        method: "POST",
+                        body: JSON.stringify({ npcId: npcId }),
+                    });
+                    const result = await response.json();
+                    if (!response.ok)
+                        throw new Error(result.error || "Deletion failed.");
+                    status.textContent = result.message;
+                    deleteBtn.textContent = "Lore Deleted!";
+                    fileInput.disabled = false;
+                    uploadBtn.disabled = false;
+                } catch (error) {
+                    status.textContent = `Error: ${error.message}`;
+                    deleteBtn.disabled = false;
+                }
+            });
+
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                if (!fileInput.files[0]) {
+                    alert("Please select a file to upload.");
+                    return;
+                }
+                uploadBtn.disabled = true;
+                status.textContent =
+                    "Uploading and processing... This can take several minutes.";
+                const formData = new FormData();
+                formData.append("loreFile", fileInput.files[0]);
+                formData.append("npcId", npcId);
+                try {
+                    const response = await secureFetch(`/upload-lore`, {
+                        method: "POST",
+                        body: formData,
+                    });
+                    const result = await response.json();
+                    if (!response.ok)
+                        throw new Error(result.error || "Upload failed.");
+
+                    status.textContent = result.message;
+                    uploadBtn.textContent = "Success!";
+                } catch (error) {
+                    status.textContent = `Error: ${error.message}`;
+                    uploadBtn.disabled = false;
+                }
+            });
+
+            // This logic is now handled on the backend, but we can keep a simple frontend check
+            async function enforceLoreUploadCap() {
+                const session = await getUserSession();
+                const userId = session?.user?.id;
+                if (!userId) return;
+
+                // This function could be simplified or removed, as the backend is the true enforcer
+            }
+
+            function showToast(msg) {
+                const toast = document.getElementById("toast");
+                toast.textContent = msg;
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 4000);
+            }
+
+            document.addEventListener("DOMContentLoaded", enforceLoreUploadCap);
+        </script>
+    </body>
+</html>

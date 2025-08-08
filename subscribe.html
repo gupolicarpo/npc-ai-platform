@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Upgrade Your Plan - NPC AI Platform</title>
+
+        <!-- Fonts to match consistent app theme -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="/auth.js" defer></script>
+
+        <style>
+            :root {
+                --bg-dark: #0d0d0d;
+                --card-bg: #2b2b2b;
+                --text-primary: #f1f1f1;
+                --text-secondary: #cccccc;
+                --accent: #ffc107;
+                --accent-hover: #e6b800;
+                --border-color: #444;
+            }
+
+            body {
+                background-color: var(--bg-dark);
+                color: var(--text-primary);
+                font-family: "Inter", sans-serif;
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .container {
+                max-width: 1200px;
+                width: 100%;
+                text-align: center;
+            }
+            h1 {
+                font-family: "Cinzel", serif;
+                color: var(--text-primary);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 1rem;
+                font-size: 2.5rem;
+                text-shadow: none;
+            }
+            .intro-text {
+                color: var(--text-secondary);
+                font-size: 1.1rem;
+                margin-bottom: 3rem;
+            }
+            .plans {
+                display: flex;
+                justify-content: center;
+                gap: 2rem;
+                flex-wrap: wrap;
+            }
+            .plan-card {
+                /* --- UPDATED: Background Image Setup --- */
+                position: relative; /* Required for the overlay */
+                background-size: cover;
+                background-position: center;
+                z-index: 1; /* Puts the card behind the overlay */
+
+                border: 1px solid var(--border-color);
+                padding: 2rem;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                width: 100%;
+                max-width: 320px;
+                display: flex;
+                flex-direction: column;
+                transition:
+                    transform 0.2s,
+                    border-color 0.2s;
+            }
+            /* --- NEW: Pseudo-element for the dark overlay --- */
+            .plan-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.75); /* Dark overlay */
+                border-radius: 11px; /* Slightly smaller than parent to avoid overlap */
+                z-index: -1; /* Puts overlay behind the text content */
+            }
+
+            .plan-card:hover {
+                transform: translateY(-5px);
+                border-color: var(--accent);
+            }
+            .plan-card h2 {
+                font-family: "Cinzel", serif;
+                color: var(--text-primary);
+                border: none;
+                margin-top: 0;
+                font-size: 1.8rem;
+            }
+            .plan-card .price {
+                font-size: 2.5rem;
+                font-family: "Cinzel", serif;
+                color: var(--text-primary);
+                margin: 0.5rem 0;
+            }
+            .plan-card .price span {
+                font-size: 1rem;
+                color: var(--text-secondary);
+            }
+            .plan-card ul {
+                list-style: none;
+                padding: 0;
+                text-align: left;
+                margin: 2rem 0;
+                color: var(--text-secondary);
+                flex-grow: 1;
+            }
+            .plan-card li {
+                margin-bottom: 1rem;
+                padding-left: 1.5rem;
+                position: relative;
+            }
+            .plan-card li::before {
+                content: "✔";
+                color: var(--accent);
+                position: absolute;
+                left: 0;
+            }
+            button {
+                width: 100%;
+                padding: 1rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                border: none;
+                border-radius: 6px;
+                transition: background-color 0.2s;
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+            }
+            button:disabled {
+                background-color: #333;
+                color: var(--text-secondary);
+                cursor: not-allowed;
+            }
+            .current-plan-btn {
+                background-color: transparent;
+                border: 1px solid var(--border-color);
+                color: var(--text-secondary);
+                cursor: default;
+            }
+            .upgrade-btn {
+                background-color: var(--accent);
+                color: black;
+            }
+            .upgrade-btn:hover:not(:disabled) {
+                background-color: var(--accent-hover);
+            }
+            .back-link {
+                display: block;
+                text-align: center;
+                margin-top: 3rem;
+                color: var(--accent);
+                font-family: "Inter", sans-serif;
+                font-weight: 600;
+                text-decoration: none;
+            }
+            .back-link:hover {
+                color: var(--accent-hover);
+            }
+
+            /* --- NEW: Specific background images for each card --- */
+            /* IMPORTANT: Replace these with the correct paths to your images in the /assets folder */
+            #explorer-card {
+                background-image: url("/assets/explorer.jpg");
+            }
+            #narrator-card {
+                background-image: url("/assets/narrator.jpg");
+            }
+            #worldbuilder-card {
+                background-image: url("/assets/worldbuilder.jpg");
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Choose Your Path</h1>
+            <p class="intro-text">
+                Unlock the full potential of your storytelling with a premium
+                tier.
+            </p>
+            <div class="plans">
+                <!-- NEW: Added an ID to each card -->
+                <div class="plan-card" id="explorer-card">
+                    <h2>Explorer</h2>
+                    <p class="price">Free</p>
+                    <ul>
+                        <li>Up to 5 Campaigns</li>
+                        <li>Up to 10 NPCs per Campaign</li>
+                        <li>5 Memories per NPC</li>
+                        <li>1 Lore Document per NPC</li>
+                    </ul>
+                    <button class="current-plan-btn" id="explorerBtn" disabled>
+                        Your Current Plan
+                    </button>
+                </div>
+                <div class="plan-card" id="narrator-card">
+                    <h2>Narrator</h2>
+                    <p class="price">$5 <span>/ month</span></p>
+                    <ul>
+                        <li>Unlimited Campaigns & NPCs</li>
+                        <li>25 Memories per NPC</li>
+                        <li>5 Lore Documents per NPC</li>
+                        <li><strong>Access to AI Voice Generation</strong></li>
+                    </ul>
+                    <button
+                        class="upgrade-btn"
+                        data-price-id="price_1Rsot51yMFCSMhNPA8fCrRNO"
+                    >
+                        Upgrade to Narrator
+                    </button>
+                </div>
+                <div class="plan-card" id="worldbuilder-card">
+                    <h2>Worldbuilder</h2>
+                    <p class="price">$10 <span>/ month</span></p>
+                    <ul>
+                        <li>All Narrator Features</li>
+                        <li>50 Memories per NPC</li>
+                        <li>10 Lore Documents per NPC</li>
+                        <li>Access to Premium NPC Templates</li>
+                        <li>Priority Support</li>
+                    </ul>
+                    <button
+                        class="upgrade-btn"
+                        data-price-id="price_1Rtmgg1yMFCSMhNP6kjJim2R"
+                    >
+                        Upgrade to Worldbuilder
+                    </button>
+                </div>
+            </div>
+            <a href="/campaigns.html" class="back-link">← Back to Dashboard</a>
+        </div>
+
+        <script>
+            // No changes needed to the JavaScript
+            document.addEventListener("DOMContentLoaded", () => {
+                const handleUpgradeClick = async (event) => {
+                    const button = event.target;
+                    const priceId = button.dataset.priceId;
+
+                    if (!priceId || priceId.startsWith("YOUR_")) {
+                        alert(
+                            "This subscription tier is not yet configured. Please contact support.",
+                        );
+                        return;
+                    }
+
+                    button.disabled = true;
+                    button.textContent = "Redirecting...";
+
+                    try {
+                        const response = await secureFetch(
+                            `/create-checkout-session`,
+                            {
+                                method: "POST",
+                                body: JSON.stringify({ priceId: priceId }),
+                            },
+                        );
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(
+                                errorData.error ||
+                                    "Could not create checkout session.",
+                            );
+                        }
+
+                        const data = await response.json();
+                        if (data.url) {
+                            window.location.href = data.url;
+                        }
+                    } catch (error) {
+                        console.error("Upgrade Error:", error);
+                        alert(
+                            "There was an error processing your request. Please try again.",
+                        );
+                        button.disabled = false;
+                        button.textContent = `Upgrade to ${button.textContent.split(" ")[2]}`;
+                    }
+                };
+
+                document.querySelectorAll(".upgrade-btn").forEach((button) => {
+                    button.addEventListener("click", handleUpgradeClick);
+                });
+
+                async function checkUserTier() {
+                    const session = await getUserSession();
+                    if (!session) return;
+
+                    try {
+                        const { data: profile } = await supabaseClient
+                            .from("profiles")
+                            .select("subscription_tier")
+                            .eq("id", session.user.id)
+                            .single();
+
+                        const currentTier =
+                            profile?.subscription_tier || "explorer";
+
+                        const currentPlanBtn = document.querySelector(
+                            `#${currentTier}Btn`,
+                        );
+                        if (currentPlanBtn) {
+                            currentPlanBtn.disabled = true;
+                            currentPlanBtn.textContent = "Your Current Plan";
+                        }
+                    } catch (error) {
+                        console.error("Could not fetch user tier:", error);
+                    }
+                }
+
+                checkUserTier();
+            });
+        </script>
+    </body>
+</html>

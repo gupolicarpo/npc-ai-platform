@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discover - NPC AI Platform</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Cinzel:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-dark: #0d0d0d;
+        --card-bg: #2b2b2b;
+        --text-primary: #f1f1f1;
+        --text-secondary: #cccccc;
+        --accent: #ffc107;
+        --accent-hover: #e6b800;
+        --border-color: #444;
+      }
+      body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+      }
+      header {
+        background-color: rgba(13, 13, 13, 0.95);
+        padding: 0.75rem 2rem;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
+      .logo {
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: white;
+        text-decoration: none;
+        font-family: "Cinzel", serif;
+      }
+      .nav {
+        display: flex;
+        gap: 1.5rem;
+      }
+      .nav a {
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        padding: 0.3rem 0.6rem;
+        transition: color 0.2s ease;
+      }
+      .nav a:hover {
+        color: var(--accent);
+      }
+      .cta {
+        background: var(--accent);
+        color: #000;
+        border-radius: 5px;
+        font-weight: bold;
+        padding: 0.5rem 1.25rem;
+        text-decoration: none;
+      }
+      main {
+        padding-top: 100px;
+      }
+      .hero {
+        padding: 5rem 2rem 3rem;
+        text-align: center;
+        background-image:
+          linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+          url("/assets/background.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .hero h1 {
+        font-size: 3rem;
+        font-family: "Cinzel", serif;
+      }
+      .hero p {
+        font-size: 1.2rem;
+        max-width: 700px;
+        margin: 1rem auto 2rem;
+      }
+      .section {
+        padding: 3rem 2rem;
+        max-width: 1000px;
+        margin: auto;
+      }
+      .section h2 {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        font-family: "Cinzel", serif;
+        text-align: center;
+      }
+
+      /* UPDATED: Added cursor and hover effect to show features are clickable */
+      .feature {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out;
+      }
+      .feature:hover {
+        transform: translateY(-5px);
+      }
+
+      .feature h3 {
+        color: var(--accent);
+        font-size: 1.5rem;
+        margin-top: 0;
+      }
+      .feature p {
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+      .cta-section {
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: #111;
+      }
+      .cta-section a {
+        background-color: var(--accent);
+        color: black;
+        font-weight: bold;
+        padding: 1rem 2rem;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 1.2rem;
+      }
+      footer {
+        text-align: center;
+        padding: 2rem;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.9rem;
+      }
+
+      /* --- NEW: STYLES FOR THE FEATURE MODAL --- */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.75);
+        display: none; /* Hidden by default */
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      }
+      .modal-overlay.visible {
+        display: flex; /* Made visible with JavaScript */
+      }
+      .modal-content {
+        background-color: var(--card-bg);
+        padding: 2.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        width: 90%;
+        max-width: 700px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .modal-content h2 {
+        font-family: "Cinzel", serif;
+        color: var(--accent);
+        margin-top: 0;
+        font-size: 2rem;
+      }
+      .modal-content p {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+      }
+      .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 2.5rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+      .close-btn:hover {
+        color: var(--text-primary);
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-left">
+          <a href="/" class="logo">NPC AI</a>
+          <nav class="nav">
+            <a href="/index.html">Home</a>
+            <a href="/discover.html">Discover</a>
+            <a href="/community.html">Community</a>
+            <a href="/guide.html">Guide</a> <!-- NEW LINK -->
+            <a href="/subscribe.html" class="premium-link">Premium</a> 
+          </nav>
+        </div>
+        <a href="/signup.html" class="cta">Get Started</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Explore the Power Behind the Platform</h1>
+        <p>
+          NPCsmith empowers Dungeon Masters with deeply reactive AI characters,
+          rich lore enforcement, persistent memory, and seamless voice
+          integration. Here’s how we do it.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>What Makes Our NPCs Unique?</h2>
+
+        <!-- UPDATED: Added a data-detailed-explanation attribute to each feature -->
+        <div
+          class="feature"
+          data-detailed-explanation="Our platform uses a custom-trained language model that goes beyond simple prompts. When you define an NPC's core traits, you're not just giving it a suggestion—you're setting its fundamental personality matrix. This matrix governs its word choice, sentence structure, and decision-making, ensuring that a 'gruff, suspicious dwarf' will never sound like a 'charming, eloquent elf.' This happens instantly, without needing to write a single line of dialogue yourself."
+        >
+          <h3>🧬 Dynamic NPC Creation</h3>
+          <p>
+            Create an NPC by choosing their role, tone, and personality traits —
+            or let the AI surprise you. Their voice, memory, and behavior emerge
+            from your setup. No scripts, no guesswork — each NPC feels truly
+            alive from your first message.
+          </p>
+        </div>
+
+        <div
+          class="feature"
+          data-detailed-explanation="The DM's Insight is powered by a secondary AI process that runs in parallel with the main dialogue generation. While the first AI is deciding what the NPC says, the second AI analyzes the context and the NPC's core motivations to generate a piece of 'internal monologue.' This gives you, the DM, a layer of narrative control and information that your players can't see, perfect for foreshadowing, detecting lies, or roleplaying subtle social cues."
+        >
+          <h3>🎭 DM’s Insight Mode</h3>
+          <p>
+            Every time your NPC speaks, the system generates a hidden “Insight”
+            visible only to you — showing their true motive, emotional state, or
+            secret plan. This gives you tools to steer the session or surprise
+            your players like a true puppet master.
+          </p>
+        </div>
+
+        <div
+          class="feature"
+          data-detailed-explanation="Lore Locks are strict, high-priority directives injected into the AI's core context before any player interaction occurs. Unlike a simple instruction, a Lore Lock is treated as an immutable fact of reality by the AI. If a lock states 'Magic is outlawed and feared,' the NPC will never casually discuss casting spells and will react with suspicion or fear if the players do. This prevents AI 'hallucinations' and keeps your world's unique rules intact."
+        >
+          <h3>📜 Lore Locks</h3>
+          <p>
+            You define the rules of your world — magic systems, political
+            events, forbidden knowledge — and NPCs will treat them as facts.
+            These “Lore Locks” act as unbreakable truths in the AI’s mind,
+            ensuring consistent storytelling across every interaction.
+          </p>
+        </div>
+
+        <div
+          class="feature"
+          data-detailed-explanation="At the end of a conversation, you can trigger the 'Create Memory' function. The AI processes the entire dialogue log and generates a concise, one-sentence summary from the NPC's point of view (e.g., 'A group of armed adventurers asked me about the old ruin, and I told them to stay away.'). This summary is permanently stored and is included in the NPC's context for all future conversations, ensuring true long-term memory."
+        >
+          <h3>🧠 Persistent Memory</h3>
+          <p>
+            NPCs don’t forget. They remember what happened in previous sessions,
+            what characters told them, and how relationships evolved. This
+            memory builds naturally over time, so your world feels reactive and
+            your choices have lasting consequences.
+          </p>
+        </div>
+
+        <div
+          class="feature"
+          data-detailed-explanation="We have partnered with ElevenLabs to provide access to their state-of-the-art voice generation models. When voice is enabled, the text generated by our AI is sent via API to ElevenLabs along with voice characteristics derived from the NPC's personality. The resulting audio is streamed directly back to your browser, creating a seamless and immersive auditory experience."
+        >
+          <h3>🗣️ ElevenLabs Voice Integration</h3>
+          <p>
+            Toggle the voice button to hear your NPCs speak aloud using
+            ElevenLabs AI voices. Choose tones like “grizzled veteran” or
+            “nervous scribe” — or just let the system handle it. Every reply
+            becomes a performance, not just a text box.
+          </p>
+        </div>
+
+        <!-- NOTE: I have left the remaining data attributes empty for you to fill in -->
+        <div class="feature" data-detailed-explanation="Our platform is built on a foundational AI that has no inherent genre bias, freeing you from the constraints of generic fantasy settings. The system learns the specifics of your world directly from you. When you use Lore Locks to define your universe's technology, key factions, unique slang, and physical laws, the AI adopts that context as its reality. This means an NPC in your cyberpunk campaign will talk about 'cred-sticks' and 'cyber-augments,' while one in your cosmic horror setting might speak of 'non-Euclidean geometry'—all because you defined the world. This ensures every character feels authentically native to your specific creation, not like a fantasy character in a different costume.">
+          <h3>🌌 Genre-Neutral Design</h3>
+          <p>No generic fantasy tropes here. Whether your world is a dark space opera or a quirky post-apocalyptic wasteland, you can train NPCs to speak your universe’s language — and respect its rules.</p>
+        </div>
+
+      <div class="feature" data-detailed-explanation="Being a Dungeon Master means managing a mountain of information. Our platform consolidates this by automatically creating a timestamped log of every single interaction. More importantly, it saves the hidden DM's Insights alongside the dialogue, giving you a complete record of what was said versus what was actually meant. You can add your own private annotations to any point in the conversation or bookmark a key moment for future reference with a single click. Before your next session, there's no need to hunt for scattered notebooks; simply open the campaign log to get a complete overview and resume the story with perfect recall, ensuring no crucial plot point or player decision is ever forgotten.">
+        <h3>📓 Session Logs & Notes</h3>
+        <p>Every session is auto-logged with full dialogue and NPC thoughts. You can bookmark scenes, leave prep notes for yourself, and return anytime to resume where you left off. Great for weekly campaigns or deep solo journaling.</p>
+      </div>
+
+      <section class="cta-section">
+        <h2>Ready to Create a Smarter World?</h2>
+        <a href="/signup.html">Start Free</a>
+      </section>
+    </main>
+
+    <!-- NEW: The HTML structure for the modal itself -->
+    <div id="featureModal" class="modal-overlay">
+      <div class="modal-content">
+        <button id="closeModalBtn" class="close-btn">&times;</button>
+        <h2 id="modalTitle"></h2>
+        <p id="modalText"></p>
+      </div>
+    </div>
+
+    <footer>&copy; 2024 NPC AI. All rights reserved.</footer>
+
+    <!-- NEW: The JavaScript to power the modal -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const modal = document.getElementById("featureModal");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalText = document.getElementById("modalText");
+        const closeModalBtn = document.getElementById("closeModalBtn");
+        const featureSections = document.querySelectorAll(".feature");
+
+        // Function to open the modal
+        const openModal = (title, text) => {
+          modalTitle.textContent = title;
+          modalText.textContent = text;
+          modal.classList.add("visible");
+        };
+
+        // Function to close the modal
+        const closeModal = () => {
+          modal.classList.remove("visible");
+        };
+
+        // Add a click listener to each feature section
+        featureSections.forEach((feature) => {
+          feature.addEventListener("click", () => {
+            const title = feature.querySelector("h3").textContent;
+            const detailedText = feature.dataset.detailedExplanation;
+            if (detailedText && !detailedText.startsWith("[")) {
+              // Only open if text is not a placeholder
+              openModal(title, detailedText);
+            }
+          });
+        });
+
+        // Add listeners for closing the modal
+        closeModalBtn.addEventListener("click", closeModal);
+
+        // Close modal by clicking on the overlay background
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) {
+            closeModal();
+          }
+        });
+
+        // Close modal by pressing the Escape key
+        window.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && modal.classList.contains("visible")) {
+            closeModal();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
