@@ -25,6 +25,15 @@
                 --accent: #ffc107;
                 --accent-hover: #e6b800;
                 --border-color: #444;
+
+                /* Specific colors for chat page elements */
+                --chat-log-bg: #1f1f1f;
+                --user-message-color: #a9d6e5; /* Light blue */
+                --npc-message-color: #f2a65a; /* Orange */
+                --insight-modal-bg: #1e1915;
+                --insight-modal-border: #4a3c2b;
+                --insight-modal-text: #d1c5ad;
+                --insight-modal-heading: #e6c58a;
             }
 
             body {
@@ -84,15 +93,15 @@
                 padding: 10px;
                 margin-bottom: 10px;
                 text-align: left;
-                background-color: var(--bg-dark);
+                background-color: var(--chat-log-bg); /* <-- UPDATED */
                 flex-grow: 1;
                 border-radius: 6px;
             }
             .user-message {
-                color: var(--text-secondary);
+                color: var(--user-message-color); /* <-- UPDATED */
             }
             .npc-message {
-                color: var(--accent);
+                color: var(--npc-message-color); /* <-- UPDATED */
                 font-style: italic;
             }
             .chat-controls {
@@ -265,11 +274,11 @@
                 align-items: center;
             }
             .insight-modal-content {
-                background-color: #1e1915;
+                background-color: var(--insight-modal-bg); /* <-- UPDATED */
                 background-image: url("https://www.transparenttextures.com/patterns/old-paper.png");
-                color: #3d2e1a;
+                color: var(--insight-modal-text); /* <-- UPDATED */
                 padding: 20px 30px;
-                border: 2px solid #4a3c2b;
+                border: 2px solid var(--insight-modal-border); /* <-- UPDATED */
                 border-radius: 8px;
                 width: 90%;
                 max-width: 500px;
@@ -278,9 +287,9 @@
             }
             .insight-modal-content h2 {
                 font-family: "Cinzel", serif;
-                color: #5c2c1a;
+                color: var(--insight-modal-heading); /* <-- UPDATED */
                 text-align: center;
-                border-bottom: 1px solid #8a6d4c;
+                border-bottom: 1px solid var(--insight-modal-border); /* <-- UPDATED */
                 padding-bottom: 0.5rem;
                 margin-top: 0;
             }
@@ -290,7 +299,7 @@
                 line-height: 1.6;
             }
             .close-button {
-                color: #888;
+                color: var(--text-secondary); /* <-- UPDATED */
                 position: absolute;
                 top: 10px;
                 right: 20px;
@@ -299,7 +308,7 @@
                 cursor: pointer;
             }
             .close-button:hover {
-                color: #3d2e1a;
+                color: var(--text-primary); /* <-- UPDATED */
             }
 
             .text-input-container {
