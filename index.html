@@ -59,7 +59,7 @@
       .nav {
         display: flex;
         gap: 1.5rem;
-        align-items: center; /* Ensures vertical alignment */
+        align-items: center;
       }
 
       .nav a {
@@ -74,7 +74,6 @@
         color: var(--accent);
       }
 
-      /* --- NEW: STYLE FOR THE PREMIUM LINK --- */
       .nav a.premium-link {
         color: var(--accent);
       }
@@ -240,13 +239,12 @@
       <div class="container">
         <div class="header-left">
           <a href="/index.html" class="logo">NPC AI</a>
-          <!-- Corrected link -->
           <nav class="nav">
             <a href="/index.html">Home</a>
             <a href="/discover.html">Discover</a>
             <a href="/community.html">Community</a>
-            <a href="/guide.html">Guide</a> <!-- NEW LINK -->
-            <a href="/subscribe.html" class="premium-link">Premium</a> 
+            <a href="/guide.html">Guide</a>
+            <a href="/subscribe.html" class="premium-link">Premium</a>
           </nav>
         </div>
         <a href="/signup.html" class="cta">Get Started</a>
@@ -268,11 +266,15 @@
       <section class="section">
         <h2>See It in Action</h2>
         <div class="video-container">
+          <!-- 
+            The video tag is now configured to be muted for autoplay,
+            and the custom play button will unmute it.
+          -->
           <video
             id="showcase-video"
             src="/assets/npc_ai_teaser.mp4"
             loop
-            muted
+            controls
             playsinline
           >
             Your browser does not support the video tag.
@@ -327,41 +329,58 @@
       const playButton = document.getElementById("play-button");
 
       if (video && playButton) {
-        // Function to attempt to play the video
+        // --- NEW: Refined video control logic ---
+        const updateButtonState = () => {
+          if (!video.paused && !video.ended && !video.muted) {
+            // Video is playing and unmuted
+            playButton.style.display = "none"; // Hide button completely
+          } else {
+            // Video is paused, ended, or muted. Show button.
+            playButton.style.display = "block";
+            if (video.muted) {
+              playButton.textContent = "🔇"; // Show muted icon if muted
+            } else {
+              playButton.textContent = "▶"; // Show play icon if paused/ended, assuming it's unmuted
+            }
+          }
+        };
+
+        // Try to autoplay when the DOM is loaded
         const tryAutoplay = () => {
+          video.muted = true; // Always attempt muted autoplay first
           video
             .play()
             .then(() => {
-              // Autoplay started successfully, hide the button
+              // Autoplay successful, hide the button temporarily as it's muted
               playButton.style.display = "none";
             })
             .catch((error) => {
-              // Autoplay was prevented, show the button
-              console.log(
-                "Autoplay prevented by browser. Showing play button.",
-              );
+              // Autoplay prevented (e.g., no user interaction yet), show play button
+              console.log("Autoplay prevented:", error.message);
+              playButton.textContent = "▶"; // Show play icon
               playButton.style.display = "block";
             });
         };
 
-        // Event listener for when the button is clicked
+        // Event listener for when the custom play/unmute button is clicked
         playButton.addEventListener("click", () => {
-          video.play();
-          playButton.style.display = "none";
+          if (video.paused || video.ended) {
+            // If video is paused or ended, play it
+            video.play();
+          }
+          // Toggle mute state
+          video.muted = !video.muted;
+          updateButtonState(); // Update button visibility/icon immediately
         });
 
-        // If the user pauses the video using browser controls, show the play button again
-        video.addEventListener("pause", () => {
-          playButton.style.display = "block";
-        });
+        // Event listeners to keep the button icon/visibility in sync
+        video.addEventListener("play", updateButtonState);
+        video.addEventListener("pause", updateButtonState);
+        video.addEventListener("volumechange", updateButtonState); // Catch changes to muted state
 
-        // When the video starts playing (either by autoplay or click), hide the button
-        video.addEventListener("play", () => {
-          playButton.style.display = "none";
-        });
-
-        // Try to autoplay when the page content is loaded
-        tryAutoplay();
+        // Initial check on load
+        document.addEventListener("DOMContentLoaded", tryAutoplay);
+        video.addEventListener("loadedmetadata", tryAutoplay); // Also listen for video metadata being loaded
       }
     </script>
   </body>
